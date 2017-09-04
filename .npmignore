@@ -1,0 +1,8 @@
+.idea
+src
+node_modules
+*/node_modules
+gulpfile.js
+.gitignore
+bin
+*/example
