@@ -1,12 +1,17 @@
 import events from 'events';
 
-class Events extends events {
+export default class Events extends events {
   startSteps(...args) {
     super.emit('startSteps', ...args);
   }
 
   error(...args) {
-    super.emit('err', ...args);
+    super.emit('error', ...args);
+
+    // fatal
+    if (!super.listeners('error').length) {
+      throw new Error(...args);
+    }
   }
 
   listen(...args) {
@@ -17,5 +22,3 @@ class Events extends events {
     super.emit('endSteps', ...args);
   }
 }
-
-export default new Events();

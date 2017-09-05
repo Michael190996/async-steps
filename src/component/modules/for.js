@@ -1,14 +1,14 @@
-import AsyncSteps from '../AsyncSteps';
+import AsyncSteps from '../../AsyncSteps';
 import _ from 'lodash';
 
-export default async function (params, beforeResult, vars, events) {
-  let {condition, steps, async} = params;
+export default async function (params, beforeResult, vars, events, stepLvl, stepNum) {
+  let {condition, steps, sync} = params;
   let result = undefined;
 
   const handler = async (index, el) => {
     vars.$currentModule.$for = {index, el};
 
-    const as = new AsyncSteps(steps, async);
+    const as = new AsyncSteps(steps, sync, stepLvl + 1, stepNum);
     return await as.init(vars, beforeResult);
   };
 
@@ -26,5 +26,5 @@ export default async function (params, beforeResult, vars, events) {
     }
   }
 
-  return await result;
+  return result;
 }

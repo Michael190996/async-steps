@@ -1,8 +1,7 @@
-import modules from './config';
-
-class Modules {
-  constructor(modules) {
+export default class Modules {
+  constructor(events, modules) {
     this._modules = {};
+    this._events = events;
     this.setModules(modules);
   }
 
@@ -16,13 +15,11 @@ class Modules {
     }
   }
 
-  async startModule(moduleName, params, beforeResult, vars, events) {
+  async startModule(moduleName, _stepLvl, _stepNum, ...args) {
     if (!this._modules[moduleName]) {
-      throw new Error(`Module "${moduleName}" of undefined`);
+      this._events.error(new Error(`Module "${moduleName}" of undefined`), _stepLvl, _stepNum);
     }
 
-    return await this._modules[moduleName](params, beforeResult, vars, events);
+    return await this._modules[moduleName](...args, _stepLvl, _stepNum);
   }
 }
-
-export default new Modules(modules);
