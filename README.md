@@ -50,7 +50,7 @@ const steps = [{
     }
 }];
 
-const as = new AsyncSteps(steps, true /*- async*/);
+const as = new AsyncSteps(steps, true /*- sync*/);
 as.init()
     .then(result => console.info(result))
     .catch(error => console.error(error));

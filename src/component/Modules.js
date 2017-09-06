@@ -5,21 +5,46 @@ export default class Modules {
     this.setModules(modules);
   }
 
-  setModule(name, func) {
-    this._modules[name] = func;
+  /**
+   * Добавляет функцию в объект _modules
+   *
+   * @param {string} moduleName
+   * @param {function} func
+   */
+  setModule(moduleName, func) {
+    if (this._modules[moduleName]) {
+      this._events.error(new Error(`Module "${moduleName}" is exist`));
+    }
+
+    this._modules[moduleName] = func;
   }
 
+  /**
+   * Добавляет функциии модулей в объект _modules
+   *
+   * @param {{name:func}} modules
+   */
   setModules(modules) {
     for (let i = 0, modulesName = Object.keys(modules); i < modulesName.length; i++) {
       this.setModule(modulesName[i], modules[modulesName[i]]);
     }
   }
 
-  async startModule(moduleName, _stepLvl, _stepNum, ...args) {
+  /**
+   * Асинхронных метод, запускающий функцию из объекта _modules
+   *
+   * @param {string} moduleName - имя модуля
+   * @param {object} params - параметры, которые использует тот или иной модуль
+   * @param {*} [beforeResult] - результат предыдущего модуля
+   * @param {object} vars - глобальный переменные
+   * @param ctx - экземпляр Ctx
+   * @return {{result, vars}} - возвращает результат модуля
+   */
+  async startModule(moduleName, params, beforeResult, vars, ctx) {
     if (!this._modules[moduleName]) {
-      this._events.error(new Error(`Module "${moduleName}" of undefined`), _stepLvl, _stepNum);
+      this._events.error(new Error(`Module "${moduleName}" of undefined`), ctx);
     }
 
-    return await this._modules[moduleName](...args, _stepLvl, _stepNum);
+    return await this._modules[moduleName](params, beforeResult, vars, ctx);
   }
 }

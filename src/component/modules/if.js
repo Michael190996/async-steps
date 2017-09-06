@@ -1,22 +1,24 @@
-import AsyncSteps from '../../AsyncSteps';
 import _ from 'lodash';
 
-export default async function (params, beforeResult, vars, events, stepLvl, stepNum) {
-  let {conditions, sync} = params;
-  let result = undefined;
-  
-  for (let i = 0; i < conditions.length; i++) {
-    const is = eval(_.template('${' + conditions[i].condition + '} ? true : false')(vars));
-
-    if (is) {
-      vars.$currentModule.$if = {
-        active: i
-      };
-
-      const as = new AsyncSteps(conditions[i].steps, sync, stepLvl + 1, stepNum);
-      result = await as.init(vars, beforeResult);
-    }
+/**
+ * Модуль проверки
+ *
+ * @param {string|boolean|number} condition - условие {params}
+ * @param {[...object]} steps - массив, состоящий из последовательных элементов (модулей) {params}
+ * @param {boolean} [sync] - синхронность {params}
+ * @param {*} [beforeResult] - результат предыдущего модуля
+ * @param {object} vars - глобальный переменные
+ * @param ctx - экземпляр Ctx
+ * @returns {{result, vars}|*}
+ */
+export default async function ({condition, steps, sync}, beforeResult, vars, ctx) {
+  if (condition === undefined) {
+    ctx.events.error(new Error('condition, steps of undefined'), ctx);
   }
 
-  return result;
+  const is = eval(_.template('${' + condition + '} ? true : false')(vars));
+
+  if (is) {
+    return await ctx.stepsInDeep(steps, sync).init(vars, beforeResult);
+  }
 }

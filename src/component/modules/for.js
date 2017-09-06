@@ -1,15 +1,26 @@
-import AsyncSteps from '../../AsyncSteps';
 import _ from 'lodash';
 
-export default async function (params, beforeResult, vars, events, stepLvl, stepNum) {
-  let {condition, steps, sync} = params;
+/**
+ * Модуль цикла
+ *
+ * @param {number|array} condition - условие {params}
+ * @param {[...object]} steps - массив, состоящий из последовательных элементов (модулей) {params}
+ * @param {boolean} [sync] - синхронность {params}
+ * @param {*} [beforeResult] - результат предыдущего модуля
+ * @param {object} vars - глобальный переменные
+ * @param ctx - экземпляр Ctx
+ * @returns {{result, vars}|*}
+ */
+export default async function ({condition, steps, sync}, beforeResult, vars, ctx) {
   let result = undefined;
+
+  if (condition === undefined) {
+    ctx.events.error(new Error('condition, steps of undefined'), ctx);
+  }
 
   const handler = async (index, el) => {
     vars.$currentModule.$for = {index, el};
-
-    const as = new AsyncSteps(steps, sync, stepLvl + 1, stepNum);
-    return await as.init(vars, beforeResult);
+    return await ctx.stepsInDeep(steps, sync).init(vars, beforeResult);
   };
 
   condition = _.template('${' + condition + '}')(vars);

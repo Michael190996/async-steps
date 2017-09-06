@@ -6,31 +6,33 @@ const vars = {
 
 const steps = [{
   module: 'for',
-  timeout: 0,
   params: {
     condition: '1',
     steps: [{
-      timeout: 0,
       module: 'for',
       params: {
-        condition: '5',
+        condition: '0',
         steps: [{
           module: 'if',
           params: {
             conditions: [
               {
-                condition: 'true',
-                steps: [{
-                  module: 'vars',
-                  params: {
-                    vars: [{
-                      i: 'i + i',
-
-                    }, {
-                      text: 'i'
-                    }]
-                  }
-                }]
+                condition: false
+              }
+            ]
+          }
+        }]
+      }
+    }, {
+      module: 'for',
+      params: {
+        condition: '0',
+        steps: [{
+          module: 'if',
+          params: {
+            conditions: [
+              {
+                condition: false
               }
             ]
           }
@@ -38,85 +40,18 @@ const steps = [{
       }
     }]
   }
-}, {
-  module: 'for',
-  params: {
-    condition: '2',
-    steps: [{
-      module: 'if',
-      params: {
-        conditions: [
-          {
-            condition: false
-          }
-        ]
-      }
-    }]
-  }
-}, {
-  module: 'for',
-  params: {
-    condition: '2',
-    steps: [{
-      module: 'if',
-      params: {
-        conditions: [
-          {
-            condition: false
-          }
-        ]
-      }
-    }]
-  }
-}, {
-  module: 'for',
-  params: {
-    condition: '2',
-    steps: [{
-      module: 'if',
-      params: {
-        conditions: [
-          {
-            condition: false
-          }
-        ]
-      }
-    }]
-  }
-}, {
-  module: 'for',
-  params: {
-    condition: '2',
-    steps: [{
-      module: 'if',
-      params: {
-        conditions: [
-          {
-            condition: false
-          }
-        ]
-      }
-    }]
-  }
-}, {
-  module: 'for',
-  params: {
-    condition: '2',
-    steps: [{
-      module: 'if',
-      params: {
-        conditions: [
-          {
-            condition: false
-          }
-        ]
-      }
-    }]
-  }
 }];
 
 const as = new AsyncSteps(steps);
 
+as.events.on('startStep', (a,v,ctx) => {
+  console.log(ctx.stepDepth, ctx.stepIndex);
+});
+
+as.events.on('error', (a) => {
+  console.log(a);
+});
+
 as.init(vars, 'thr').then((result) => {
   console.log(JSON.stringify(result, undefined, 2));
-}).catch(err => console.log('err'));
+})

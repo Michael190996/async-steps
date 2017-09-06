@@ -1,54 +1,67 @@
 import Modules from './component/Modules';
 import Events from './component/Events';
 import requireModules from './requireModules';
+import Ctx from './Ctx';
 
 export const events = new Events();
 
 export const modules = new Modules(events, requireModules);
 
 export class AsyncSteps {
-  constructor(steps, sync = false, _stepLvl = 1, _stepNum = 1, _modules = modules, _events = events) {
-    if (!steps.length) {
-      events.error(new Error('Steps of undefined'), _stepLvl, _stepNum);
-    }
+  constructor(steps, sync = false, _modules = modules, _events = events) {
+    this._ctx = new Ctx(steps, sync, _modules, _events);
 
-    this._steps = steps;
-    this._modules = _modules;
-    this._events = _events;
-    this._stepLvl = _stepLvl;
-    this.sync = sync;
+    if (!steps.length) {
+      events.error(new Error('Steps of undefined'), this.ctx);
+    }
+  }
+
+  get ctx() {
+    return this._ctx;
   }
 
   get modules() {
-    return this._modules;
+    return this._ctx.modules;
   }
 
   get events() {
-    return this._events;
+    return this._ctx.events;
   }
 
-  startStep(moduleName, params, beforeResult, vars, timeout, stepNum) {
-    if (!this.sync) {
+  async startStep(moduleName, params, beforeResult, vars, timeout) {
+    if (!timeout) {
+      if (this.ctx._sync) {
+        return this.modules.startModule(moduleName, params, beforeResult, vars, this.ctx);
+      } else {
+        return await this.modules.startModule(moduleName, params, beforeResult, vars, this.ctx);
+      }
+    }
+
+    if (this.ctx._sync) {
+      setTimeout(() => {
+        this.modules.startModule(moduleName, params, beforeResult, vars, this.ctx);
+      }, timeout);
+    } else {
       return new Promise((resolve, reject) => {
-        setTimeout(() => {
-          resolve(this.modules.startModule(moduleName, this._stepLvl, stepNum, params, beforeResult, vars, this.events));
+        setTimeout(async() => {
+          return resolve(await this.modules.startModule(moduleName, params, beforeResult, vars, this.ctx));
         }, timeout);
       });
-    } else {
-      return setTimeout(() => {
-        this.modules.startModule(moduleName, this._stepLvl, stepNum, params, beforeResult, vars, this.events);
-      }, timeout);
     }
   }
 
   async init(vars = {}, beforeResult) {
+    const steps = this.ctx._steps;
     let result = beforeResult;
     vars.$modules = vars.$modules || {};
 
-    events.startSteps(this._steps, beforeResult, vars, this._stepLvl);
+    events.startSteps(beforeResult, vars, this.ctx);
 
-    for (let stepNum = 0; stepNum < this._steps.length; stepNum++) {
-      let currentStep = this._steps[stepNum];
+    for (let stepIndex = 0; stepIndex < steps.length; stepIndex++) {
+      let currentStep = steps[stepIndex];
+      this.ctx.stepIndex = stepIndex+1;
+
+      this.events.startStep(result, vars, this.ctx);
 
       vars.$currentModule = {
         id: currentStep.id,
@@ -61,17 +74,19 @@ export class AsyncSteps {
       }
 
       currentStep.timeout = currentStep.timeout || 0;
-      const response = await this.startStep(currentStep.module, currentStep.params, result, vars, currentStep.timeout, stepNum + 1);
+      const response = await this.startStep(currentStep.module, currentStep.params, result, vars, currentStep.timeout);
 
       if (response) {
         result = response.result || result;
         vars = response.vars || vars;
       }
 
-      this.events.listen(result, vars, this._stepLvl, stepNum + 1);
+      result = vars[currentStep.result] || result;
+
+      this.events.endStep(result, vars, this.ctx);
     }
 
-    this.events.endSteps(this._steps, result, vars, this._stepLvl);
+    this.events.endSteps(result, vars, this.ctx);
     return {result, vars};
   }
 }

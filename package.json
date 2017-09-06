@@ -1,6 +1,6 @@
 {
   "name": "async-steps",
-  "version": "0.0.121",
+  "version": "0.0.122",
   "main": "dist/AsyncSteps.js",
   "author": {
     "email": "misha.basov.96@yandex.ru",
@@ -40,5 +40,5 @@
   "engines": {
     "node": ">= 1.0.0"
   },
-  "readme": "README.md"
+  "readme": "Async-steps - Method of writing async modules (or steps)"
 }
