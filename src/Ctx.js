@@ -10,10 +10,20 @@ export default class Ctx {
     this._steps = steps;
   }
 
+  /**
+   * Вернет экземпляр класса Modules
+   *
+   * @return modules
+   */
   get modules() {
     return this._modules;
   }
 
+  /**
+   * Вернет экземпляр класса Events
+   *
+   * @return events
+   */
   get events() {
     return this._events;
   }
@@ -57,9 +67,9 @@ export default class Ctx {
   /**
    * Метод возвращает новый экземпляр класса AsyncSteps на одну вложенность глубже от начального элемента из массива _steps
    *
-   * @param {[...object]} steps - массив, состоящий из последовательных элементов (модулей)
+   * @param {[object]} steps - массив, состоящий из последовательных элементов (модулей)
    * @param {boolean} [sync] - синхронность
-   * @return {AsyncSteps} - новый экземпляр AsyncSteps
+   * @return AsyncSteps - вернет новый экземпляр AsyncSteps
    */
   stepsInDeep(steps, sync = false) {
     const as = new AsyncSteps(steps, sync, this._modules, this._events);

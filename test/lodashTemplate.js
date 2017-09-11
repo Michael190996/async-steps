@@ -1,24 +1,17 @@
 import AsyncSteps from '../src/AsyncSteps';
 
-describe('Проверка модуля if', () => {
+describe('Проверка модуля lodash:template', () => {
   it('true', (done) => {
     const steps = [{
-      module: 'if',
+      module: 'lodash:template',
       params: {
-        condition: true,
-        steps: [{
-          module: 'if',
-          result: true,
-          params: {
-            condition: false
-          }
-        }]
+        template: '<% if (test !== undefined) { %>true<% } %>'
       }
     }];
 
     const as = new AsyncSteps(steps);
 
-    as.init()
+    as.init({test: true})
       .then((response) => {
         if (response.result === true) {
           done();

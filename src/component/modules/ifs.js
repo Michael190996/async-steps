@@ -12,19 +12,19 @@ import moduleIf from './if';
  * @returns {{result, vars}|*}
  */
 export default async function ({conditions, sync}, beforeResult, vars, ctx) {
-  let result = undefined;
+  let response = {result: beforeResult, vars};
 
   if (conditions === undefined) {
     ctx.events.error(new Error('conditions of undefined'), ctx);
   }
 
   for (let i = 0; i < conditions.length; i++) {
-    result = await moduleIf({
+    response = await moduleIf({
       sync,
       condition: conditions[i].condition,
       steps: conditions[i].steps
-    }, result, vars, ctx);
+    }, response.result, vars, ctx);
   }
 
-  return result;
+  return response;
 }

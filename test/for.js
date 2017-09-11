@@ -1,16 +1,16 @@
 import AsyncSteps from '../src/AsyncSteps';
 
-describe('Проверка модуля if', () => {
-  it('true', (done) => {
+describe('Проверка модуля for', () => {
+  it('4', (done) => {
     const steps = [{
-      module: 'if',
+      module: 'for',
       params: {
-        condition: true,
+        condition: 4,
         steps: [{
-          module: 'if',
-          result: true,
+          module: 'for',
+          result: '${$BASIC.$for.index}',
           params: {
-            condition: false
+            condition: 0
           }
         }]
       }
@@ -20,7 +20,7 @@ describe('Проверка модуля if', () => {
 
     as.init()
       .then((response) => {
-        if (response.result === true) {
+        if (response.result === 4) {
           done();
         } else {
           done('Result is not true');

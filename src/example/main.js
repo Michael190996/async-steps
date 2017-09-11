@@ -5,41 +5,66 @@ const vars = {
 };
 
 const steps = [{
-  module: 'for',
+  module: 'set:components',
   params: {
-    condition: '1',
-    steps: [{
-      module: 'for',
-      params: {
-        condition: '0',
-        steps: [{
-          module: 'if',
-          params: {
-            conditions: [
-              {
-                condition: false
-              }
-            ]
-          }
-        }]
-      }
+    components: [{
+      name: 'c',
+      steps: [{
+        timeout: 3000,
+        module: 'for',
+        params: {
+          condition: '1',
+          steps: [{
+            module: 'for',
+            params: {
+              condition: '0',
+              steps: [{
+                module: 'if',
+                params: {
+                  conditions: [
+                    {
+                      condition: false
+                    }
+                  ]
+                }
+              }]
+            }
+          }, {
+            module: 'for',
+            params: {
+              condition: '0',
+              steps: [{
+                module: 'if',
+                params: {
+                  conditions: [
+                    {
+                      condition: false
+                    }
+                  ]
+                }
+              }]
+            }
+          }]
+        },
+        result: true
+      }]
     }, {
-      module: 'for',
-      params: {
-        condition: '0',
+        name: 'ced',
         steps: [{
           module: 'if',
           params: {
-            conditions: [
-              {
-                condition: false
-              }
-            ]
-          }
+            condition: false
+          },
+          result: false
         }]
-      }
     }]
   }
+}, {
+  module: 'call:component',
+  params: {
+    name: 'ced',
+  },
+  result: '${$BASIC.currentResult} + '
 }];
 
 const as = new AsyncSteps(steps);

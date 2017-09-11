@@ -2,7 +2,7 @@ import events from 'events';
 
 export default class Events extends events {
   /**
-   * @param {*} result - результат модуля
+   * @param {*} [result] - результат модуля
    * @param {object} vars - глобальные переменные
    * @param ctx - экземпляр Ctx
    */
@@ -25,7 +25,7 @@ export default class Events extends events {
   }
 
   /**
-   * @param {*} result - результат модуля
+   * @param {*} [result] - результат модуля
    * @param {object} vars - глобальные переменные
    * @param ctx - экземпляр Ctx
    */
@@ -34,7 +34,7 @@ export default class Events extends events {
   }
 
   /**
-   * @param {*} result - результат модуля
+   * @param {*} [result] - результат модуля
    * @param {object} vars - глобальные переменные
    * @param ctx - экземпляр Ctx
    */
@@ -43,7 +43,7 @@ export default class Events extends events {
   }
 
   /**
-   * @param {*} result - результат модуля
+   * @param {*} [result] - результат модуля
    * @param {object} vars - глобальные переменные
    * @param ctx - экземпляр Ctx
    */

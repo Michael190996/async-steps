@@ -13,7 +13,7 @@ import _ from 'lodash';
  */
 export default async function ({condition, steps, sync}, beforeResult, vars, ctx) {
   if (condition === undefined) {
-    ctx.events.error(new Error('condition, steps of undefined'), ctx);
+    ctx.events.error(new Error('condition of undefined'), ctx);
   }
 
   const is = eval(_.template('${' + condition + '} ? true : false')(vars));

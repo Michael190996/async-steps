@@ -31,7 +31,7 @@ export default class Modules {
   }
 
   /**
-   * Асинхронных метод, запускающий функцию из объекта _modules
+   * Асинхронный метод, запускающий функцию из объекта _modules
    *
    * @param {string} moduleName - имя модуля
    * @param {object} params - параметры, которые использует тот или иной модуль
