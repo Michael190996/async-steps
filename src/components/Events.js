@@ -2,6 +2,14 @@ import events from 'events';
 
 export default class Events extends events {
   /**
+   * @param {*} info - любая информация
+   * @param [ctx] - экземпляр Ctx
+   */
+  info(info, ctx) {
+    super.emit('info', info, ctx);
+  }
+
+  /**
    * @param {*} [result] - результат модуля
    * @param {object} vars - глобальные переменные
    * @param ctx - экземпляр Ctx

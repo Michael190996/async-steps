@@ -1,4 +1,4 @@
-import AsyncSteps from '../AsyncSteps';
+import {AsyncSteps, asEvents, asModules} from '../index';
 
 const vars = {
   i: 5
@@ -6,6 +6,9 @@ const vars = {
 
 const steps = [{
   module: 'set:components',
+  after(p) {
+    return 5556
+  },
   params: {
     components: [{
       name: 'c',
@@ -13,13 +16,19 @@ const steps = [{
         timeout: 3000,
         module: 'for',
         params: {
-          condition: '1',
+          condition: '1000',
           steps: [{
             module: 'for',
             params: {
               condition: '0',
               steps: [{
                 module: 'if',
+                before: () => {
+                  console.log(true);
+                },
+                after: () => {
+
+                },
                 params: {
                   conditions: [
                     {
@@ -45,8 +54,7 @@ const steps = [{
               }]
             }
           }]
-        },
-        result: true
+        }
       }]
     }, {
         name: 'ced',
@@ -54,8 +62,7 @@ const steps = [{
           module: 'if',
           params: {
             condition: false
-          },
-          result: false
+          }
         }]
     }]
   }
@@ -69,14 +76,14 @@ const steps = [{
 
 const as = new AsyncSteps(steps);
 
-as.events.on('startStep', (a,v,ctx) => {
+asEvents.on('startStep', (a,v,ctx) => {
   console.log(ctx.stepDepth, ctx.stepIndex);
 });
 
-as.events.on('error', (a) => {
+asEvents.on('error', (a) => {
   console.log(a);
 });
 
 as.init(vars, 'thr').then((result) => {
   console.log(JSON.stringify(result, undefined, 2));
-})
+});

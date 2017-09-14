@@ -1,4 +1,4 @@
-import {AsyncSteps} from './AsyncSteps';
+import AsyncSteps from './AsyncSteps';
 
 export default class Ctx {
   constructor(steps, sync, modules, events) {

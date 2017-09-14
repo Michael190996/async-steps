@@ -3,8 +3,8 @@ import moduleIf from './if';
 /**
  * Модуль проверки нескольких условий
  *
- * @param {[...object]} conditions - условия {params}
- * @param {[...object]} conditions[].steps - массив, состоящий из последовательных элементов (модулей) {params}
+ * @param {[object]} conditions - условия {params}
+ * @param {[object]} conditions[].steps - массив, состоящий из последовательных элементов (модулей) {params}
  * @param {boolean} [sync] - синхронность {params}
  * @param {*} [beforeResult] - результат предыдущего модуля
  * @param {object} vars - глобальный переменные

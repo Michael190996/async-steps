@@ -4,7 +4,7 @@ import _ from 'lodash';
  * Модуль проверки
  *
  * @param {string|boolean|number} condition - условие {params}
- * @param {[...object]} steps - массив, состоящий из последовательных элементов (модулей) {params}
+ * @param {[object]} steps - массив, состоящий из последовательных элементов (модулей) {params}
  * @param {boolean} [sync] - синхронность {params}
  * @param {*} [beforeResult] - результат предыдущего модуля
  * @param {object} vars - глобальный переменные

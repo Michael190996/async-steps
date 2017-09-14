@@ -4,7 +4,7 @@ import _ from 'lodash';
  * Модуль цикла
  *
  * @param {number|array} condition - условие {params}
- * @param {[...object]} steps - массив, состоящий из последовательных элементов (модулей) {params}
+ * @param {[object]} steps - массив, состоящий из последовательных элементов (модулей) {params}
  * @param {boolean} [sync] - синхронность {params}
  * @param {*} [beforeResult] - результат предыдущего модуля
  * @param {object} vars - глобальный переменные

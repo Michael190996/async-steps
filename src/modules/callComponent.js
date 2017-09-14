@@ -1,4 +1,4 @@
-import AsyncSteps from '../../AsyncSteps';
+import AsyncSteps from '../components/AsyncSteps';
 
 /**
  * @param {string} name - имя компонента, установленного ранее {params}

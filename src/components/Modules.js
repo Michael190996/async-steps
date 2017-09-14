@@ -1,7 +1,12 @@
+import log4js from 'log4js';
+
 export default class Modules {
-  constructor(events, modules) {
+  constructor(events, modules = {}) {
     this._modules = {};
     this._events = events;
+    this._logger = log4js.getLogger(Modules.name);
+    this._logger.level = 'info';
+
     this.setModules(modules);
   }
 
@@ -13,16 +18,17 @@ export default class Modules {
    */
   setModule(moduleName, func) {
     if (this._modules[moduleName]) {
-      this._events.error(new Error(`Module "${moduleName}" is exist`));
+      return this._events.error(new Error(`module "${moduleName}" is exist`));
     }
 
+    this._logger.info(`set module "${moduleName}"`);
     this._modules[moduleName] = func;
   }
 
   /**
    * Добавляет функциии модулей в объект _modules
    *
-   * @param {{name:func}} modules
+   * @param {object} modules {name:func}
    */
   setModules(modules) {
     for (let i = 0, modulesName = Object.keys(modules); i < modulesName.length; i++) {

@@ -1,23 +1,17 @@
-import Modules from './component/Modules';
-import Events from './component/Events';
-import requireModules from './requireModules';
 import Ctx from './Ctx';
-import utils from './utils/utils';
+import utils from '../utils/utils';
+import {asEvents, asModules} from '../index';
 
-export const events = new Events();
-
-export const modules = new Modules(events, requireModules);
-
-export class AsyncSteps {
-  constructor(steps, sync = false, _modules = modules, _events = events) {
+export default class AsyncSteps {
+  constructor(steps, sync = false, _modules = asModules, _events = asEvents) {
     this._ctx = new Ctx(steps, sync, _modules, _events);
 
     if (!Array.isArray(steps)) {
-      events.error(new Error('steps is not array'), this.ctx);
+      _events.error(new Error('steps is not array'), this.ctx);
     }
 
     if (!steps.length) {
-      events.error(new Error('steps of undefined'), this.ctx);
+      _events.error(new Error('steps of undefined'), this.ctx);
     }
   }
 
@@ -88,15 +82,13 @@ export class AsyncSteps {
     vars.$modules = vars.$modules || {};
     vars.$BASIC = vars.$BASIC || {};
 
-    events.startSteps(beforeResult, vars, this.ctx);
+    asEvents.startSteps(beforeResult, vars, this.ctx);
 
     for (let stepIndex = 0; stepIndex < steps.length; stepIndex++) {
       let currentStep = steps[stepIndex];
       this.ctx.stepIndex = stepIndex + 1;
 
-      if (currentStep.params === undefined) {
-        events.error(new Error('params of undefined'), this.ctx);
-      }
+      currentStep.params = currentStep.params || {};
 
       this.events.startStep(result, vars, this.ctx);
 
@@ -111,6 +103,12 @@ export class AsyncSteps {
       }
 
       vars.$BASIC.beforeResult = result;
+
+      if (typeof currentStep.before === 'function') {
+        const _result = await currentStep.before(currentStep.params, beforeResult, vars, this.ctx);
+        result = _result !== undefined ? _result : result;
+      }
+
       const response = await this.startStep(currentStep.module, currentStep.params, result, vars, currentStep.timeout);
 
       if (response) {
@@ -123,11 +121,14 @@ export class AsyncSteps {
 
       vars.$BASIC.currentResult = result;
       this.events.endStep(result, vars, this.ctx);
+
+      if (typeof currentStep.after === 'function') {
+        const _result = await currentStep.after(currentStep.params, beforeResult, vars, this.ctx);
+        result = _result !== undefined ? _result : result;
+      }
     }
 
     this.events.endSteps(result, vars, this.ctx);
     return {result, vars};
   }
 }
-
-export default AsyncSteps;

@@ -5,7 +5,7 @@
   [![stable](https://img.shields.io/badge/stablity-beta-green.svg?style=flat)](https://www.npmjs.com/package/futoin-asyncsteps)
 [![NPM](https://nodei.co/npm/async-steps.png?downloads=true&downloadRank=true&stars=true)](https://nodei.co/npm/async-steps/)
 
-# Async-steps (0.0.2) **BETA**
+# Async-steps (0.1.0) **BETA**
 ## Что это?
 **Async-steps** это node.js библиотека или метод написания последовательных модулей (блоков инструкций) в читабельном виде.
 ## Для чего?

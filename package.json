@@ -1,7 +1,8 @@
 {
   "name": "async-steps",
-  "version": "0.0.2",
-  "main": "dist/AsyncSteps.js",
+  "version": "0.1.0",
+  "main": "dist/index.js",
+  "homedir": "dist",
   "author": {
     "email": "misha.basov.96@yandex.ru",
     "name": "Michael Basov",
@@ -17,8 +18,9 @@
     "prepublish": "node_modules/.bin/babel-node --presets node6 node_modules/gulp/bin/gulp.js build:prod"
   },
   "dependencies": {
+    "babel-plugin-transform-regenerator": "^6.26.0",
     "lodash": "^4.17.4",
-    "babel-plugin-transform-regenerator": "^6.26.0"
+    "log4js": "^2.3.3"
   },
   "devDependencies": {
     "babel-cli": "^6.26.0",
@@ -42,5 +44,13 @@
   "engines": {
     "node": ">= 1.0.0"
   },
-  "readme": "Async-steps - Method of writing async modules (or steps)"
+  "readme": "Async-steps - Method of writing async modules (or steps)",
+  "asyncsteps": {
+    "pathsToModules": [{
+      "prefix": false,
+      "homeDir": true,
+      "path": "dist/modules"
+    }],
+    "importsModules": {}
+  }
 }

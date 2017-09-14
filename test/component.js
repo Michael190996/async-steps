@@ -1,4 +1,4 @@
-import AsyncSteps from '../src/AsyncSteps';
+import AsyncSteps from '../src/components/AsyncSteps';
 
 describe('Проверка модулей компонентов', () => {
   it('set:component/call:component', (done) => {
