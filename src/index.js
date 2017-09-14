@@ -29,7 +29,7 @@ for (let i = 0; i < pathsToModules.length; i++) {
   let modules = {};
 
   if (pathsToModules[i].homeDir) {
-    modules = utils.getModulesFromFolder(path.join(config.homeDir, pathsToModules[i].path));
+    modules = utils.getModulesFromFolder(path.join(config.cwdDir, pathsToModules[i].path));
   } else {
     modules = require(pathsToModules[i].path).default;
   }
