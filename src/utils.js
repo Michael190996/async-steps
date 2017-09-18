@@ -29,10 +29,7 @@ export default {
         const _path = path.join(dir, files[i]);
 
         if (files[i].search(/\.js$/) != -1 && !fs.statSync(_path).isDirectory()) {
-          const name = files[i].replace(/\.js$/, '').split(/(\D)/g).map((el) => {
-            const char = el.toLowerCase();
-            return char === el ? el : ':' + char;
-          }).join('');
+          const name = files[i].replace(/\.js$/, '');
 
           try {
             modules[name] = require(_path).default;

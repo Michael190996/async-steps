@@ -5,20 +5,42 @@
   [![stable](https://img.shields.io/badge/stablity-beta-green.svg?style=flat)](https://www.npmjs.com/package/futoin-asyncsteps)
 [![NPM](https://nodei.co/npm/async-steps.png?downloads=true&downloadRank=true&stars=true)](https://nodei.co/npm/async-steps/)
 
-# Async-steps (0.1.0) **BETA**
+# Async-steps (0.1.3) **BETA**
 ## Что это?
-**Async-steps** это node.js библиотека или метод написания последовательных модулей (блоков инструкций) в читабельном виде.
+**Async-steps** - node.js библиотека для написания последовательных модулей (блоков инструкций) в простом и понятном виде.
+* [Для чего](#Для-чего)
+* [Похожие проекты](#Похожие-проекты)
+* [Фичи и особенности](#Фичи-и-особенности)
+* [Установка](#Установка)
+* [Инструкция по использованию](#Инструкция-по-использованию)
+  - [Добавление модуля](#Добавление-модуля)
+  - [Вызов модулей](#Вызов-модулей)
+* [Примеры](#Примеры)
+  - [Все в одном](#Все-в-одном)
+  - [Вызов классов-контроллеров](#Вызов-классов-контроллеров)
+* [Расширяемость из библиотек](#Расширяемость-из-библиотек)
+* [Раздел asyncsteps в package.json](#Раздел-asyncsteps-в-package.json)
+* [API](#api)
+  - [Classes-controllers](#classes-controllers)
+    - [Ctx](#ctx)
+    - [Events](#events)
+    - [Modules](#modules)
+    - [AsyncSteps](#asyncsteps)
+  - [Params](#params)
+    - [steps](#steps)
+    - [vars](#vars)
+    - [moduleFunction](#moduleFunction)
 ## Для чего?
-Для различных систем мониторинга, парсинга или сборок, где есть нужно последовательно выполнять ту или иную функцию.
-## Подобные проекты:
+Для различных систем мониторинга, парсинга или сборок, где нужно последовательно выполнять ту или иную функцию.
+## Похожие проекты
  - **Grunt/gulp**
  - **Puppet**
  - **Ansible**
-## Фичи/особенности данной системы:
-- **Расширяемость** - Модули изолированы от друг друга, что позволяет удобно расширять и дополнять модулями.
-- **Потоки** - Модуль также может возвращать результат предыдущего.
-- **Гибкость в ассинхронности/синхронности** - Все модули вызываюся как последовательно, так и беспорядочно.
-## Установка:
+## Фичи и особенности
+- **Расширяемость** - Модули изолированы от внешних фунций, что позволяет удобно расширять и дополнять систему.
+- **Потоки** - Модуль также может возвращать результат в едином потоке result.
+- **Гибкость в ассинхронности/синхронности** - Все модули могут вызываться как последовательно, так и беспорядочно, простым флагом sync.
+## Установка
 - **Npm**:
 ```sh
 npm install --save async-steps
@@ -30,66 +52,209 @@ cd async-steps && \
 npm i && \
 npm run build # npm run prepublish
 ```
-## Примеры использования:
+## Инструкция по использованию 
+#### Добавление модуля
+Добавить модули можно как в разделе asyncsteps файла package.json 
+```json
+"asyncsteps": {
+   "pathsToModules": [{
+      "path": "async-steps.modules-as"
+   }]
+}
+```
+так и через экземпляр класса Modules
 ```javascript
 import AsyncSteps from 'async-steps';
 
-const module = async function test(params, beforeResult, vars, events) {
-    return await {
+const module = function test(params, beforeResult, vars, events) {
+    return {
       result: params.test
     };
 };
 
-AsyncSteps.modules.setModule(module.name, module);
+const modules = {
+  test2: async function(params, beforeResult, vars, events) {
+    return await {
+      result: params.test
+    };
+  }
+}
+
+AsyncSteps.modules.setModule(module.name, module); // один
+AsyncSteps.modules.setModules(modules); // несколько
+```
+#### Вызов модулей
+```javascript
+import AsyncSteps from 'async-steps';
 
 const steps = [{
-    module: 'test',
-    timeout: 0,
-    params: {
-      test: 'Hello world!'
-    }
+  module: 'test'
 }];
 
-const as = new AsyncSteps(steps, true /*- sync*/);
+const as = new AsyncSteps(steps);
 as.init()
-    .then(result => console.info(result))
-    .catch(error => console.error(error));
+	.then(response => console.info(response))
+	.catch(err => console.error(err))
 ```
-
-### Создание модуля (рекомендация)
-#### modules/test.js
+## Примеры
+#### Все в одном
 ```javascript
-export default async function test(params, beforeResult, vars, events) {
-    return await {
-      result: params.test
-    };
+import {asModules, AsyncSteps, asEvents} from 'async-steps';
+
+asModules.addModule('test', (params, beforeResult, vars, ctx) => {
+  console.log(params, beforeResult, vars, ctx);
+});
+
+asEvents.on('startsSteps', (result, vars, ctx) => {
+  console.log(result, vars, ctx);
+});
+
+const as = new AsyncSteps([{
+  module: 'test'
+}]);
+
+as.init({vars: true}, 'result')
+	.then(response => console.info(response))
+	.catch(err => console.error(err))
+```
+#### Вызов классов-контроллеров
+```javascript
+import AsyncSteps from '../src/controllers/AsyncSteps';
+import AsModules from '../src/controllers/Modules';
+import AsEvents from '../src/controllers/Events';
+
+const asEvents = new AsEvents();
+const asModules = new AsModules(asEvents);
+
+asModules.addModule('test', (params, beforeResult, vars, ctx) => {
+  console.log(params, beforeResult, vars, ctx);
+});
+
+const vars = {
+  vars: true
 };
-```
-#### modules/index.js
-```javascript
-import test from './test';
-export default {test};
-```
-#### steps.js
-```javascript
-export default [{
-    module: 'test',
-    timeout: 0,
-    params: {
-      test: 'Hello world!'
-    }
-}];
-```
-#### app.js
-```javascript
-import AsyncSteps from 'async-steps';
-import modules from './modules/index.js';
-import steps from './steps';
 
-AsyncSteps.modules.setModules(modules);
+const steps = [{
+  module: 'test'
+}]
 
-const as = new AsyncSteps(steps, true /*- async*/);
-as.init()
-    .then(result => console.info(result))
-    .catch(error => console.error(error));
-```
+const as = new AsyncSteps(steps, true, asModules, asEvents);
+as.init(vars, 'result')
+	.then(response => console.info(response))
+	.catch(err => console.error(err))
+````
+## Расширяемость из библиотек
+- [см. https://github.com/Michael190996/async-steps.modules-as](https://github.com/Michael190996/async-steps.modules-as)
+## Раздел asyncsteps в package.json 
+* asyncsteps
+  - {boolean} noModulesAs=false - не добавлять модулей из библиотеки async-steps.modules-as
+  - {object[]} [pathsToModules] - массив объектов настроек модулей
+    - {string} [prefix] - добавляет префикс к названиям модулей `${prefix}/${moduleName}`
+    - {boolean} [homeDir] - берет модуль либо с библиотеки, либо с текущей директории
+    - {string} path - имя модуля или путь к директории с модулями
+  - {object} [importsModules]
+    - {name: path} - имя и путь к модулю
+## API
+### Classes-controllers
+* Классы-контроллеры для вызова лежат в директории src/controllers/*
+#### Ctx
+  * Ctx(steps[, sync][, modules][, events])
+  - [steps](#steps)
+  - {boolean} sync - синхронность
+  - [modules - экземпляр класса Modules](#modules)
+  - [events - экземпляр класса Events](#events)
+  * .prefix - добавляет префикс к названиям модулей `${prefix}/${moduleName}`
+  * .modules - [ссылка на экземпляр класса Modules](#modules)
+  * .events - [ссылка на экземпляр класса Events](#events)
+  * .stepDepth - позиция глубины вложенности в [steps](#steps)
+  * .stepIndex - индекс текущей позиции в [steps](#steps)
+  * .stepsInDeep(steps[, sync][, prefix]) - метод вызывает класс [asyncSteps](#asyncsteps) со заданной позицией
+    - [steps](#steps)
+    - {boolean} sync - синхронность
+    - {string} prefix - добавляет префикс к названиям модулей `${prefix}/${moduleName}`
+    
+#### Events
+Класс событий, расширенный от нативного класса [Events](https://nodejs.org/api/events.html#events_events)
+* Events() 
+  - .startSteps([result], vars, ctx) 
+    - {*} [result] 
+    - [vars](#vars)
+    - ctx - [экземпляр класса Ctx](#ctx)
+  - .on('startSteps', function(result, vars, ctx))
+  - .startStep([result], vars, ctx)
+    - {*} [result] 
+    - [vars](#vars)
+    - ctx - [экземпляр класса Ctx](#ctx)
+  - .on('startStep', function(result, vars, ctx))
+  - .endSteps([result], vars, ctx)
+    - {*} [result] 
+    - [vars](#vars)
+    - ctx - [экземпляр класса Ctx](#ctx)
+  - .on('endSteps', function(result, vars, ctx))
+  - .endStep([result], vars, ctx)
+    - {*} [result] 
+    - [vars](#vars)
+    - ctx - [экземпляр класса Ctx](#ctx)  
+    - .on('endStep', function(result, vars, ctx))
+  - .error(error, ctx)
+    - {*} error - любая ошибка
+    - ctx - [экземпляр класса Ctx](#ctx)
+  - .on('error', function(error, ctx))
+    
+#### Modules
+Класс управляющий модулями
+* Modules(events[, modules])
+  - [events - экземпляр класса Events](#events)
+  - {object} [modules] - модули
+    - {moduleName: [function](#moduleFunction)} - уникальное имя: функция
+  * static getModulesFromFolder(dir[, prefix]) - возвращает модули из указанной папки
+    - {string} dir - Путь до папки
+    - {string} prefix - добавляет префикс к названиям модулей `${prefix}/${moduleName}`
+  * .addModule(moduleName, func) 
+    - {string} moduleName - уникальное имя
+    - {function} [func](#moduleFunction)
+  * .addModules(modules)
+    - {object} modules
+      - {moduleName: [function](#moduleFunction)} - уникальное имя: функция
+  * .startModule(moduleName, params, beforeResult, vars, ctx)
+    - {string} moduleName - имя вызываемого модуля
+    - {params} - параметры соответствующего модуля
+    - {*} [beforeResult] - предыдущий результат
+    - [vars](#vars)
+    - ctx - [экземпляр класса Ctx](#ctx) 
+    
+#### AsyncSteps
+Класс старта
+* AsyncSteps(steps[, sync][, modules][, events]) 
+  - [steps](#steps)
+  - {boolean} sync - синхронность
+  - [[modules] - экземпляр класса Modules](#modules)
+  - [[events] - экземпляр класса Events](#events)
+  * .init([vars][, beforeResult])
+    - [vars](#vars)
+    - {*} [beforeResult] - предыдущий результат
+  * .ctx - [ссылка на экземпляр класса Ctx](#ctx) 
+  * .modules - [ссылка на экземпляр класса modules](#modules)
+  * .events - [ссылка на экземпляр класса Events](#events)
+  
+### Params
+##### steps
+- {object[]} steps - последовательные модули
+  - {string} module - имя вызываемого модуля
+  - {string|number} [id] - уникальный идентификатор (если есть, то сохраняется текущий модуль в vars.$modules[${id}])
+  - {object} [params] - параметры соответствующего модуля
+  - {number} [timeout] - задержка вызова текущего модуля
+  - {string} [prefix] - добавляет префикс к названию модуля `${prefix}/${moduleName}`
+  - {boolean} [sync] - синхронность
+  - {function} [[after]](#moduleFunction) - функция, исполняющая после всего завершения текущего модуля 
+    - результат функции записывается в результат модуля result
+  - {function} [[before]](#moduleFunction) - функция, исполняющая перед текущем модулем
+    - результат функции записывается в результат модуля result
+##### vars
+- {var: value} vars - глобальные переменные
+##### moduleFunction
+- function(params, beforeResult, vars, ctx)
+  - {object} [params] - параметры соответствующего модуля
+  - {*} [beforeResult] - предыдущий результат
+  - [vars](#vars)
+  - ctx - [экземпляр класса Ctx](#ctx)

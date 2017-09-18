@@ -10,3 +10,4 @@ export default {
   homePackage,
   cwdPackage: require(path.join(cwdDir, 'package.json'))
 }
+

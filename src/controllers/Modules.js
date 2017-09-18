@@ -1,4 +1,5 @@
 import log4js from 'log4js';
+import utils from '../utils';
 
 export default class Modules {
   constructor(events, modules = {}) {
@@ -7,16 +8,38 @@ export default class Modules {
     this._logger = log4js.getLogger(Modules.name);
     this._logger.level = 'info';
 
-    this.setModules(modules);
+    this.addModules(modules);
   }
 
   /**
-   * Добавляет функцию в объект _modules
+   * Возвращает модули из указанной папки
+   *
+   * @param {string} dir - путь до папки
+   * @param {string} prefix=false - добавляет к именам префикс `${prefix}/${moduleName}`
+   * @return {object}
+   */
+  static getModulesFromFolder(dir, prefix = false) {
+    const modules = utils.getModulesFromFolder(dir);
+
+    if (prefix) {
+      const newModules = {};
+      for (let g = 0, modulesName = Object.keys(modules); g < modulesName.length; g++) {
+        newModules[`${prefix}/${modulesName[g]}`] = modules[modulesName[g]];
+      }
+
+      return newModules;
+    } else {
+      return modules;
+    }
+  }
+
+  /**
+   * Добавляет функцию в объект _modules[moduleName]
    *
    * @param {string} moduleName
    * @param {function} func
    */
-  setModule(moduleName, func) {
+  addModule(moduleName, func) {
     if (this._modules[moduleName]) {
       return this._events.error(new Error(`module "${moduleName}" is exist`));
     }
@@ -28,11 +51,11 @@ export default class Modules {
   /**
    * Добавляет функциии модулей в объект _modules
    *
-   * @param {object} modules {name:func}
+   * @param {{name:function}} modules
    */
-  setModules(modules) {
+  addModules(modules) {
     for (let i = 0, modulesName = Object.keys(modules); i < modulesName.length; i++) {
-      this.setModule(modulesName[i], modules[modulesName[i]]);
+      this.addModule(modulesName[i], modules[modulesName[i]]);
     }
   }
 

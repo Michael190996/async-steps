@@ -1,10 +1,12 @@
+import log4js from 'log4js';
 import Ctx from './Ctx';
-import utils from '../utils/utils';
-import {asEvents, asModules} from '../index';
+import utils from '../utils';
 
 export default class AsyncSteps {
-  constructor(steps, sync = false, _modules = asModules, _events = asEvents) {
+  constructor(steps, sync = false, _modules = require('../index').asModules, _events = require('../index').asEvents) {
     this._ctx = new Ctx(steps, sync, _modules, _events);
+    this.logger = log4js.getLogger(AsyncSteps.name);
+    this.logger.level = 'info';
 
     if (!Array.isArray(steps)) {
       _events.error(new Error('steps is not array'), this.ctx);
@@ -47,7 +49,7 @@ export default class AsyncSteps {
    * @param {number} [timeout] - таймер на текущий вызов модуля
    * @returns {{vars, result}|*}
    */
-  async startStep(moduleName, params, beforeResult, vars, timeout = 0) {
+  async _startStep(moduleName, params, beforeResult, vars, timeout = 0) {
     if (!timeout) {
       if (this.ctx._sync) {
         return this.modules.startModule(moduleName, params, beforeResult, vars, this.ctx);
@@ -82,15 +84,22 @@ export default class AsyncSteps {
     vars.$modules = vars.$modules || {};
     vars.$BASIC = vars.$BASIC || {};
 
-    asEvents.startSteps(beforeResult, vars, this.ctx);
+    this.events.startSteps(beforeResult, vars, this.ctx);
 
     for (let stepIndex = 0; stepIndex < steps.length; stepIndex++) {
       let currentStep = steps[stepIndex];
       this.ctx.stepIndex = stepIndex + 1;
 
+      this.logger.info(`start step ${this.ctx.stepIndex}:${this.ctx.stepDepth}`);
+      this.events.startStep(result, vars, this.ctx);
+
       currentStep.params = currentStep.params || {};
 
-      this.events.startStep(result, vars, this.ctx);
+      if (currentStep.prefix) {
+        currentStep.module = `${currentStep.prefix}/${currentStep.module}`;
+      } else if (currentStep.prefix !== false && this.ctx.prefix) {
+        currentStep.module = `${this.ctx.prefix}/${currentStep.module}`;
+      }
 
       vars.$currentModule = {
         id: currentStep.id,
@@ -109,7 +118,7 @@ export default class AsyncSteps {
         result = _result !== undefined ? _result : result;
       }
 
-      const response = await this.startStep(currentStep.module, currentStep.params, result, vars, currentStep.timeout);
+      const response = await this._startStep(currentStep.module, currentStep.params, result, vars, currentStep.timeout);
 
       if (response) {
         result = response.result !== undefined ? response.result : result;
@@ -120,6 +129,7 @@ export default class AsyncSteps {
       result = _result !== undefined ? _result : result;
 
       vars.$BASIC.currentResult = result;
+      this.logger.info(`end step ${this.ctx.stepIndex}:${this.ctx.stepDepth}`);
       this.events.endStep(result, vars, this.ctx);
 
       if (typeof currentStep.after === 'function') {

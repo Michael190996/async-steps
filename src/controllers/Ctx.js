@@ -8,6 +8,25 @@ export default class Ctx {
     this._events = events;
     this._sync = sync;
     this._steps = steps;
+    this._prefix = '';
+  }
+
+  /**
+   * Вернет префикс модуля
+   *
+   * @return {string} prefix
+   */
+  get prefix() {
+    return this._prefix;
+  }
+
+  /**
+   * Запишит префикс модуля prefix/moduleName
+   *
+   * @param {string} prefix
+   */
+  set prefix(prefix) {
+    this._prefix = prefix;
   }
 
   /**
@@ -67,14 +86,16 @@ export default class Ctx {
   /**
    * Метод возвращает новый экземпляр класса AsyncSteps на одну вложенность глубже от начального элемента из массива _steps
    *
-   * @param {[object]} steps - массив, состоящий из последовательных элементов (модулей)
+   * @param {object[]} steps - массив, состоящий из последовательных элементов (модулей)
    * @param {boolean} [sync] - синхронность
+   * @param {string} [prefix]
    * @return AsyncSteps - вернет новый экземпляр AsyncSteps
    */
-  stepsInDeep(steps, sync = false) {
+  stepsInDeep(steps, sync = false, prefix) {
     const as = new AsyncSteps(steps, sync, this._modules, this._events);
     as.ctx.stepIndex = this.stepIndex;
     as.ctx.stepDepth = this.stepDepth+1;
+    as.ctx.prefix = prefix || as.ctx.prefix;
 
     return as;
   }
