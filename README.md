@@ -19,7 +19,7 @@
   - [Все в одном](#Все-в-одном)
   - [Вызов классов-контроллеров](#Вызов-классов-контроллеров)
 * [Расширяемость из библиотек](#Расширяемость-из-библиотек)
-* [Раздел asyncsteps в package.json](#Раздел-asyncsteps-в-package.json)
+* [Раздел asyncsteps в package.json](#Раздел-asyncsteps-в-packagejson)
 * [API](#api)
   - [Classes-controllers](#classes-controllers)
     - [Ctx](#ctx)
@@ -29,7 +29,7 @@
   - [Params](#params)
     - [steps](#steps)
     - [vars](#vars)
-    - [moduleFunction](#moduleFunction)
+    - [moduleFunction](#modulefunction)
 ## Для чего?
 Для различных систем мониторинга, парсинга или сборок, где нужно последовательно выполнять ту или иную функцию.
 ## Похожие проекты
@@ -206,16 +206,16 @@ as.init(vars, 'result')
 * Modules(events[, modules])
   - [events - экземпляр класса Events](#events)
   - {object} [modules] - модули
-    - {moduleName: [function](#moduleFunction)} - уникальное имя: функция
+    - {moduleName: [function](#modulefunction)} - уникальное имя: функция
   * static getModulesFromFolder(dir[, prefix]) - возвращает модули из указанной папки
     - {string} dir - Путь до папки
     - {string} prefix - добавляет префикс к названиям модулей `${prefix}/${moduleName}`
   * .addModule(moduleName, func) 
     - {string} moduleName - уникальное имя
-    - {function} [func](#moduleFunction)
+    - {function} [func](#modulefunction)
   * .addModules(modules)
     - {object} modules
-      - {moduleName: [function](#moduleFunction)} - уникальное имя: функция
+      - {moduleName: [function](#modulefunction)} - уникальное имя: функция
   * .startModule(moduleName, params, beforeResult, vars, ctx)
     - {string} moduleName - имя вызываемого модуля
     - {params} - параметры соответствующего модуля
@@ -246,9 +246,9 @@ as.init(vars, 'result')
   - {number} [timeout] - задержка вызова текущего модуля
   - {string} [prefix] - добавляет префикс к названию модуля `${prefix}/${moduleName}`
   - {boolean} [sync] - синхронность
-  - {function} [[after]](#moduleFunction) - функция, исполняющая после всего завершения текущего модуля 
+  - {function} [[after]](#modulefunction) - функция, исполняющая после всего завершения текущего модуля 
     - результат функции записывается в результат модуля result
-  - {function} [[before]](#moduleFunction) - функция, исполняющая перед текущем модулем
+  - {function} [[before]](#modulefunction) - функция, исполняющая перед текущем модулем
     - результат функции записывается в результат модуля result
 ##### vars
 - {var: value} vars - глобальные переменные
