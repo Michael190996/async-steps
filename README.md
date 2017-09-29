@@ -105,7 +105,7 @@ asModules.addModule('test', (params, beforeResult, vars, ctx) => {
   console.log(params, beforeResult, vars, ctx);
 });
 
-asEvents.on('startsSteps', (result, vars, ctx) => {
+asEvents.on('initSteps', (result, vars, ctx) => {
   console.log(result, vars, ctx);
 });
 
@@ -119,9 +119,9 @@ as.init({vars: true}, 'result')
 ```
 #### Вызов классов-контроллеров
 ```javascript
-import AsyncSteps from '../src/controllers/AsyncSteps';
-import AsModules from '../src/controllers/Modules';
-import AsEvents from '../src/controllers/Events';
+import AsyncSteps from '../dist/controllers/AsyncSteps';
+import AsModules from '../dist/controllers/Modules';
+import AsEvents from '../dist/controllers/Events';
 
 const asEvents = new AsEvents();
 const asModules = new AsModules(asEvents);
@@ -138,7 +138,7 @@ const steps = [{
   module: 'test'
 }]
 
-const as = new AsyncSteps(steps, true, asModules, asEvents);
+const as = new AsyncSteps(steps, asModules, asEvents);
 as.init(vars, 'result')
 	.then(response => console.info(response))
 	.catch(err => console.error(err))
@@ -156,7 +156,7 @@ as.init(vars, 'result')
     - {name: path} - имя и путь к модулю
 ## API
 ### Classes-controllers
-* Классы-контроллеры для вызова лежат в директории src/controllers/*
+* Классы-контроллеры для вызова лежат в директории dist/controllers/*
 #### Ctx
   * Ctx({[sync, ][timeoeut][, prefix]}[, modules][, events])
   - {boolean} [sync] - синхронность
@@ -167,7 +167,7 @@ as.init(vars, 'result')
   
   * .sync - синхронность
   
-  * .prefix - префикс к названиям модулей `${prefix}/${moduleName}`
+  * .prefix - префикс к названию модуля `${prefix}/${moduleName}`
   
   * .timeout - задержка текущего модуля
   
@@ -181,7 +181,7 @@ as.init(vars, 'result')
   
   * .showStepScheme() - возвращает схему вызовов модулей [steps](#steps)
   
-  * .stepsInDeep(steps) - метод вызывает класс [asyncSteps](#asyncsteps) со заданной позицией
+  * .stepsInDeep(steps) - метод возвращает новый экземпляр класса [asyncSteps](#asyncsteps) со заданной позицией
     - [steps](#steps)
     
 #### Events
@@ -223,7 +223,7 @@ as.init(vars, 'result')
     
   * static getModulesFromFolder(dir[, prefix]) - возвращает модули из указанной папки
     - {string} dir - Путь до папки
-    - {string} prefix - добавляет префикс к названиям модулей `${prefix}/${moduleName}`
+    - {string} [prefix] - добавляет префикс к названиям модулей `${prefix}/${moduleName}`
     
   * .addModule(moduleName, func) 
     - {string} moduleName - уникальное имя
@@ -233,7 +233,7 @@ as.init(vars, 'result')
     - {object} modules
       - {moduleName: [function](#modulefunction)} - уникальное имя: функция
       
-  * .startModule(moduleName, params, beforeResult, vars, ctx)
+  * .startModule(moduleName, params[, beforeResult], vars, ctx)
     - {string} moduleName - имя вызываемого модуля
     - {params} - параметры соответствующего модуля
     - {*} [beforeResult] - предыдущий результат
@@ -252,10 +252,10 @@ as.init(vars, 'result')
   * .events - [ссылка на экземпляр класса Events](#events)
   
   * .init([vars][, beforeResult])
-    - [vars](#vars)
+    - [[vars]](#vars)
     - {*} [beforeResult] - предыдущий результат
     
-  * .getPosCurrentStep() - {index, depth, scheme}
+  * .getPosCurrentStep() - возвращает {index, depth, scheme}
   
   * .getNewBasic() - возвращает новый $BASIC [vars](#vars)
   
@@ -267,14 +267,14 @@ as.init(vars, 'result')
   - {number} [timeout] - задержка вызова текущего модуля
   - {string} [prefix] - добавляет префикс к названию модуля `${prefix}/${moduleName}`
   - {boolean} [sync] - синхронность
-  - {function} [[after]](#modulefunction) - функция, исполняющая после всего завершения текущего модуля 
+  - {function} [[after]](#modulefunction) - функция, исполняющая после завершения текущего модуля 
     - результат функции записывается в результат модуля result
   - {function} [[before]](#modulefunction) - функция, исполняющая перед текущем модулем
     - результат функции записывается в результат модуля result
     
 ##### vars
 - {var: value} vars - глобальные переменные
-	- {object} [$BASIC] - вспомогательный объект модулей
+  - {object} [$BASIC] - вспомогательный объект модулей
     - [currentModule](#steps) - текущий модуль
     - {*} currentResult - текущий результат модуля
     - {*} beforeResult - предыдущий результат модуля
@@ -282,7 +282,7 @@ as.init(vars, 'result')
       - {boolean} lodash - добавляет шаблонизатор на параметры params [модулей](#steps)
           
 ##### moduleFunction
-- function(params, beforeResult, vars, ctx)
+- function([params][, beforeResult], vars, ctx)
   - {object} [params] - параметры соответствующего модуля
   - {*} [beforeResult] - предыдущий результат
   - [vars](#vars)

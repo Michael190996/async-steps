@@ -76,6 +76,10 @@ export default class Modules {
       this._events.error(new Error(`Module "${moduleName}" of undefined`), ctx);
     }
 
-    return await this._modules[moduleName](params, beforeResult, vars, ctx);
+    try {
+      return await this._modules[moduleName](params, beforeResult, vars, ctx);
+    } catch (err) {
+      this._events.error(new Error(err), ctx);
+    }
   }
 }
