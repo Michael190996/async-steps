@@ -15,21 +15,23 @@ export default class Modules {
    * Возвращает модули из указанной папки
    *
    * @param {string} dir - путь до папки
-   * @param {string} prefix=false - добавляет к именам префикс `${prefix}/${moduleName}`
+   * @param {string} prefix - добавляет к именам префикс `${prefix}/${moduleName}`
    * @return {object}
    */
-  static getModulesFromFolder(dir, prefix = false) {
-    const modules = utils.getModulesFromFolder(dir);
+  static getModulesFromFolder(dir, prefix) {
+    const MODULES = utils.getModulesFromFolder(dir);
 
     if (prefix) {
       const newModules = {};
-      for (let g = 0, modulesName = Object.keys(modules); g < modulesName.length; g++) {
-        newModules[`${prefix}/${modulesName[g]}`] = modules[modulesName[g]];
+      
+      for (let g = 0, modulesName = Object.keys(MODULES); g < modulesName.length; g++) {
+        const moduleName = `${prefix}/${modulesName[g]}`;
+        newModules[moduleName] = MODULES[modulesName[g]];
       }
 
       return newModules;
     } else {
-      return modules;
+      return MODULES;
     }
   }
 

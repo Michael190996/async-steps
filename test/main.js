@@ -3,74 +3,64 @@ import {AsyncSteps, asEvents, asModules} from '../src/index';
 describe('Проверка 555', () => {
   it('true', (done) => {
     const steps = [{
+      module: 'vars',
+      params: {
+        init: {
+          i:'${typeof i !== "undefined" ? i+1 : 1}'
+        }
+      }
+    },{
       module: 'setComponents',
-      after() {
-        return 555;
-      },
       params: {
         components: [{
           name: 'c',
           steps: [{
-            timeout: 3000,
-            module: 'for',
+            module: 'if',
+            template: '#',
             params: {
-              condition: '1000',
+              condition: true,
               steps: [{
-                module: 'for',
+                module: 'if',
+                template: '#',
                 params: {
-                  condition: '0',
+                  condition: true,
                   steps: [{
                     module: 'if',
-                    before: () => {
-                      console.log(true);
-                    },
-                    after: () => {
-
-                    },
+                    template: '#',
                     params: {
-                      conditions: [
-                        {
-                          condition: false
-                        }
-                      ]
+                      condition: false,
+                      steps: undefined
                     }
                   }]
                 }
               }, {
-                module: 'for',
+                module: 'if',
+                template: '#',
                 params: {
-                  condition: '0',
+                  condition: true,
                   steps: [{
                     module: 'if',
+                    template: '#',
                     params: {
-                      conditions: [
-                        {
-                          condition: false
-                        }
-                      ]
+                      condition: false,
+                      steps: undefined
                     }
                   }]
                 }
               }]
             }
           }]
-        }, {
-          name: 'ced',
-          steps: [{
-            module: 'if',
-            params: {
-              condition: false
-            }
-          }]
         }]
-      }
+      },
+      after: () => 555
     }, {
       module: 'callComponent',
       params: {
-        name: 'ced',
+        name: 'c',
       },
       result: '${$BASIC.currentResult}'
     }];
+
 
     const as = new AsyncSteps(steps);
 

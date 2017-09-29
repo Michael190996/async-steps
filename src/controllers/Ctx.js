@@ -1,14 +1,15 @@
 import AsyncSteps from './AsyncSteps';
 
 export default class Ctx {
-  constructor(steps, sync, modules, events) {
+  constructor({sync, timeout, prefix}, modules, events) {
     this._stepDepth = 1;
     this._stepIndex = 1;
+    this._stepScheme = undefined;
     this._modules = modules;
     this._events = events;
     this._sync = sync;
-    this._steps = steps;
-    this._prefix = '';
+    this._prefix = prefix;
+    this._timeout = timeout;
   }
 
   /**
@@ -21,12 +22,17 @@ export default class Ctx {
   }
 
   /**
-   * Запишит префикс модуля prefix/moduleName
-   *
-   * @param {string} prefix
+   * @return {boolean}
    */
-  set prefix(prefix) {
-    this._prefix = prefix;
+  get sync() {
+    return this._sync;
+  }
+
+  /**
+   * @return {number}
+   */
+  get timeout() {
+    return this._timeout;
   }
 
   /**
@@ -84,18 +90,38 @@ export default class Ctx {
   }
 
   /**
+   * @param {string} scheme
+   */
+  _setStepScheme(scheme) {
+    this._stepScheme = scheme;
+  }
+
+  /**
+   * Возвращает схему вызовов модулей
+   *
+   * @return {string|number}
+   */
+  showStepScheme() {
+    if (this._stepScheme) {
+      return this._stepScheme + ' -> ' + this.stepIndex;
+    } else {
+      return this.stepIndex;
+    }
+  }
+
+  /**
    * Метод возвращает новый экземпляр класса AsyncSteps на одну вложенность глубже от начального элемента из массива _steps
    *
    * @param {object[]} steps - массив, состоящий из последовательных элементов (модулей)
-   * @param {boolean} [sync] - синхронность
-   * @param {string} [prefix]
    * @return AsyncSteps - вернет новый экземпляр AsyncSteps
    */
-  stepsInDeep(steps, sync = false, prefix) {
-    const as = new AsyncSteps(steps, sync, this._modules, this._events);
-    as.ctx.stepIndex = this.stepIndex;
-    as.ctx.stepDepth = this.stepDepth+1;
-    as.ctx.prefix = prefix || as.ctx.prefix;
+  stepsInDeep(steps) {
+    const as = new AsyncSteps(steps, this._modules, this._events);
+    as._setSettingCurrentStep({
+      index: this.stepIndex,
+      depth: this.stepDepth + 1,
+      scheme: this.showStepScheme()
+    });
 
     return as;
   }

@@ -19,27 +19,38 @@ export default {
     }
   },
 
+  templateFromObj(obj, vars) {
+    const newObj = Object.assign({}, obj);
+
+    for (let i = 0, keys = Object.keys(newObj); i < keys.length; i++) {
+      let template = newObj[keys[i]];
+      newObj[keys[i]] = this.template(template, vars);
+    }
+
+    return newObj;
+  },
+
   getModulesFromFolder(dir) {
     const modules = {};
 
     try {
-      const files = fs.readdirSync(dir);
+      const FILES = fs.readdirSync(dir);
 
-      for (let i in files) {
-        const _path = path.join(dir, files[i]);
+      for (let i in FILES) {
+        const _path = path.join(dir, FILES[i]);
 
-        if (files[i].search(/\.js$/) != -1 && !fs.statSync(_path).isDirectory()) {
-          const name = files[i].replace(/\.js$/, '');
+        if (FILES[i].search(/\.js$/) != -1 && !fs.statSync(_path).isDirectory()) {
+          const NAME = FILES[i].replace(/\.js$/, '');
 
           try {
-            modules[name] = require(_path).default;
+            modules[NAME] = require(_path).default;
           } catch (err) {
             logger.info(_path, err.toString());
           }
         }
       }
     } catch (err) {
-      logger.info('Modules of undefined', dir);
+      logger.info('Modules of undefined', dir, err.toString());
     }
 
     return modules;

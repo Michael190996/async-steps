@@ -3,70 +3,105 @@ import Ctx from './Ctx';
 import utils from '../utils';
 
 export default class AsyncSteps {
-  constructor(steps, sync = false, _modules = require('../index').asModules, _events = require('../index').asEvents) {
-    this._ctx = new Ctx(steps, sync, _modules, _events);
-    this.logger = log4js.getLogger(AsyncSteps.name);
-    this.logger.level = 'info';
+  constructor(steps, modules = require('../index').asModules, events = require('../index').asEvents) {
+    this._modules = modules;
+    this._events = events;
+    this._steps = steps;
+    this._logger = log4js.getLogger(AsyncSteps.name);
+    this._logger.level = 'info';
+    this._currentStepIndex = 1;
+    this._currentStepDepth = 1;
+    this._currentStepScheme = null;
 
     if (!Array.isArray(steps)) {
-      _events.error(new Error('steps is not array'), this.ctx);
+      this._events.error(new Error('steps is not array'));
     }
 
     if (!steps.length) {
-      _events.error(new Error('steps of undefined'), this.ctx);
+      this._events.error(new Error('steps of undefined'));
     }
   }
 
   /**
-   * @return Ctx - Вернет экземпляр класса Ctx
+   * @param {number} index
+   * @param {number} depth
+   * @param {string|number} scheme
    */
-  get ctx() {
-    return this._ctx;
+  _setSettingCurrentStep({index, depth, scheme}) {
+    this._currentStepIndex = index;
+    this._currentStepDepth = depth;
+    this._currentStepScheme = scheme;
+  }
+
+  /**
+   * @return {{index: (number), depth: (number), scheme: (string|number)}}
+   */
+  getPosCurrentStep() {
+    return {
+      index: this._currentStepIndex,
+      depth: this._currentStepDepth,
+      scheme: this._currentStepScheme
+    }
+  }
+
+  /**
+   * @returns {{currentModule: null, beforeResult: null, currentResult: null, setting: {lodash: boolean}}}
+   */
+  getNewBasic() {
+    return {
+      currentModule: null,
+      beforeResult: null,
+      currentResult: null,
+      setting: {
+        lodash: false
+      }
+    }
   }
 
   /**
    * @return modules - Вернет экземпляр класса Modules
    */
   get modules() {
-    return this._ctx.modules;
+    return this._modules;
   }
 
   /**
-   * @return Modules - Вернет экземпляр класса events
+   * @return events - Вернет экземпляр класса Events
    */
   get events() {
-    return this._ctx.events;
+    return this._events;
   }
 
   /**
    * Метод запускает модуль
-   * ВАЖНО: модуль может вызывать под модули
+   * !!! модуль может вызывать под модули
    *
    * @param {string} moduleName - имя модуля
    * @param {object} params - параметры
    * @param {*} [beforeResult] - предыдущий результат модуля
    * @param {object} vars - глобальные переменные
-   * @param {number} [timeout] - таймер на текущий вызов модуля
-   * @returns {{vars, result}|*}
+   * @param ctx - экземпляр класса Ctx
+   * @return {{vars, result}|*}
    */
-  async _startStep(moduleName, params, beforeResult, vars, timeout = 0) {
-    if (!timeout) {
-      if (this.ctx._sync) {
-        return this.modules.startModule(moduleName, params, beforeResult, vars, this.ctx);
+  async _startStep(moduleName, params, beforeResult, vars, ctx) {
+    const SYNC = ctx.sync;
+    const TIMEOUT = ctx.timeout;
+
+    if (!TIMEOUT) {
+      if (SYNC) {
+        return this.modules.startModule(moduleName, params, beforeResult, vars, ctx);
       } else {
-        return await this.modules.startModule(moduleName, params, beforeResult, vars, this.ctx);
+        return await this.modules.startModule(moduleName, params, beforeResult, vars, ctx);
       }
     }
 
-    if (this.ctx._sync) {
-      setTimeout(() => {
-        this.modules.startModule(moduleName, params, beforeResult, vars, this.ctx);
-      }, timeout);
+    if (SYNC) {
+      setTimeout(() => this.modules.startModule(moduleName, params, beforeResult, vars, ctx), TIMEOUT);
     } else {
       return new Promise((resolve, reject) => {
         setTimeout(async() => {
-          return resolve(await this.modules.startModule(moduleName, params, beforeResult, vars, this.ctx));
-        }, timeout);
+          return resolve(await this.modules.startModule(moduleName, params, beforeResult, vars, ctx));
+        }, TIMEOUT);
       });
     }
   }
@@ -79,66 +114,76 @@ export default class AsyncSteps {
    * @return {{result: *, vars: object}}
    */
   async init(vars = {}, beforeResult) {
-    const steps = this.ctx._steps;
+    vars.$BASIC = vars.$BASIC || this.getNewBasic();
+
     let result = beforeResult;
-    vars.$modules = vars.$modules || {};
-    vars.$BASIC = vars.$BASIC || {};
 
-    this.events.startSteps(beforeResult, vars, this.ctx);
+    this.events.initSteps(beforeResult, vars);
 
-    for (let stepIndex = 0; stepIndex < steps.length; stepIndex++) {
-      let currentStep = steps[stepIndex];
-      this.ctx.stepIndex = stepIndex + 1;
+    for (let stepIndex = 0; stepIndex < this._steps.length; stepIndex++) {
+      const INDEX = stepIndex + 1;
+      const DEPTH = this._currentStepDepth;
+      const SCHEME = this._currentStepScheme;
+      const CURRENTSTEP = this._steps[stepIndex];
+      const MODULENAME = CURRENTSTEP.prefix ? `${CURRENTSTEP.prefix}/${CURRENTSTEP.module}` : CURRENTSTEP.module;
 
-      this.logger.info(`start step ${this.ctx.stepIndex}:${this.ctx.stepDepth}`);
-      this.events.startStep(result, vars, this.ctx);
-
-      currentStep.params = currentStep.params || {};
-
-      if (currentStep.prefix) {
-        currentStep.module = `${currentStep.prefix}/${currentStep.module}`;
-      } else if (currentStep.prefix !== false && this.ctx.prefix) {
-        currentStep.module = `${this.ctx.prefix}/${currentStep.module}`;
+      let params = null;
+      if (vars.$BASIC.setting.lodash) {
+        params = utils.templateFromObj(CURRENTSTEP.params, vars);
+      } else {
+        params = Object.assign({}, CURRENTSTEP.params);
       }
 
-      vars.$currentModule = {
-        id: currentStep.id,
-        name: currentStep.module,
-        params: currentStep.params
-      };
+      this._setSettingCurrentStep({
+        index: INDEX,
+        depth: DEPTH,
+        scheme: SCHEME
+      });
 
-      if (vars.$currentModule.id) {
-        vars.$modules[vars.$currentModule.id] = vars.$currentModule;
-      }
+      const ctx = new Ctx({
+        sync: CURRENTSTEP.sync,
+        timeout: CURRENTSTEP.timeout,
+        prefix: CURRENTSTEP.prefix
+      }, this.modules, this.events);
 
+      ctx.stepIndex = INDEX;
+      ctx.stepDepth = DEPTH;
+      ctx._setStepScheme(SCHEME);
+
+      vars.$BASIC.currentModule = CURRENTSTEP;
       vars.$BASIC.beforeResult = result;
 
-      if (typeof currentStep.before === 'function') {
-        const _result = await currentStep.before(currentStep.params, beforeResult, vars, this.ctx);
+      if (typeof CURRENTSTEP.before === 'function') {
+        const _result = await CURRENTSTEP.before(params, result, vars, ctx);
         result = _result !== undefined ? _result : result;
       }
 
-      const response = await this._startStep(currentStep.module, currentStep.params, result, vars, currentStep.timeout);
+      this._logger.info(`start step ${ctx.stepIndex}:${ctx.stepDepth}, scheme "${ctx.showStepScheme()}"`);
+      this.events.startStep(result, vars, ctx);
+
+      const response = await this._startStep(MODULENAME, params, result, vars, ctx);
 
       if (response) {
         result = response.result !== undefined ? response.result : result;
         vars = response.vars || vars;
       }
 
-      const _result = utils.template(currentStep.result, vars);
+      const _result = utils.template(CURRENTSTEP.result, vars);
       result = _result !== undefined ? _result : result;
 
       vars.$BASIC.currentResult = result;
-      this.logger.info(`end step ${this.ctx.stepIndex}:${this.ctx.stepDepth}`);
-      this.events.endStep(result, vars, this.ctx);
 
-      if (typeof currentStep.after === 'function') {
-        const _result = await currentStep.after(currentStep.params, beforeResult, vars, this.ctx);
+      if (typeof CURRENTSTEP.after === 'function') {
+        const _result = await CURRENTSTEP.after(params, result, vars, ctx);
         result = _result !== undefined ? _result : result;
       }
+
+      this.events.endStep(result, vars, ctx);
+      this._logger.info(`end step ${ctx.stepIndex}:${ctx.stepDepth}, scheme "${ctx.showStepScheme()}"`);
     }
 
-    this.events.endSteps(result, vars, this.ctx);
+    this.events.end(result, vars);
+
     return {result, vars};
   }
 }

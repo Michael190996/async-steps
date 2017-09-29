@@ -1,13 +1,12 @@
-import events from 'events';
+import Events from 'events';
 
-export default class Events extends events {
+export default class extends Events {
   /**
    * @param {*} [result] - результат модуля
    * @param {object} vars - глобальные переменные
-   * @param ctx - экземпляр Ctx
    */
-  startSteps(result, vars, ctx) {
-    super.emit('startSteps', result, vars, ctx);
+  initSteps(result, vars) {
+    super.emit('initSteps', result, vars);
   }
 
   /**
@@ -45,9 +44,8 @@ export default class Events extends events {
   /**
    * @param {*} [result] - результат модуля
    * @param {object} vars - глобальные переменные
-   * @param ctx - экземпляр Ctx
    */
-  endSteps(result, vars, ctx) {
-    super.emit('endSteps', result, vars, ctx);
+  end(result, vars) {
+    super.emit('end', result, vars);
   }
 }

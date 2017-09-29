@@ -8,13 +8,13 @@ import gulpSourcemaps from 'gulp-sourcemaps';
 import gulpUtil from 'gulp-util';
 import childProcess from 'child_process';
 
-let app = false;
-const homedir = 'dist';
-const checkScript = gulpUtil.env.CS;
+const HOMEDIR = 'dist';
+const CHECKSCRIPT = gulpUtil.env.CS;
+let app = null;
 
 const server = () => {
-  if (checkScript) {
-    app = childProcess.fork(checkScript);
+  if (CHECKSCRIPT) {
+    app = childProcess.fork(CHECKSCRIPT);
 
     app.on('close', () => {
       server();
@@ -28,7 +28,7 @@ const wrapPipe = (title, taskFn) => {
 
     const onSuccess = () => {
       if (!_err) {
-        gulp.src(homedir).pipe(gulpNotify({
+        gulp.src(HOMEDIR).pipe(gulpNotify({
           title: 'Success: ' + title
         }));
 
@@ -39,7 +39,7 @@ const wrapPipe = (title, taskFn) => {
     const onError = (err) => {
       _err = true;
 
-      gulp.src(homedir).pipe(gulpNotify({
+      gulp.src(HOMEDIR).pipe(gulpNotify({
         title: 'Error: ' + title,
         message: err
       }));
@@ -48,6 +48,7 @@ const wrapPipe = (title, taskFn) => {
     };
 
     const outStream = taskFn(onSuccess, onError);
+
     if (outStream && typeof outStream.on === 'function') {
       outStream.on('end', onSuccess);
     }
@@ -55,7 +56,7 @@ const wrapPipe = (title, taskFn) => {
 };
 
 gulp.task('clean', () => {
-  return gulp.src(homedir, {
+  return gulp.src(HOMEDIR, {
     read: false
   }).pipe(gulpClean());
 });
@@ -69,14 +70,14 @@ gulp.task('lint', () => {
       if (result.errorCount) {
         _err = true;
 
-        gulp.src(homedir).pipe(gulpNotify({
+        gulp.src(HOMEDIR).pipe(gulpNotify({
           title: 'Error: Js lint',
           message: `filePath: ${result.filePath}\r${result.messages[0].message}\rline: ${result.messages[0].line}, column: ${result.messages[0].column}`
-        }))
+        }));
       }
     }).on('end', () => {
       if (!_err) {
-        gulp.src(homedir).pipe(gulpNotify({
+        gulp.src(HOMEDIR).pipe(gulpNotify({
           title: 'Success: Js lint'
         }));
       }
@@ -90,7 +91,7 @@ gulp.task('babel:dev', wrapPipe('Babel:dev', (success, error) => {
     .pipe(gulpSourcemaps.init())
     .pipe(gulpBabel().on('error', error))
     .pipe(gulpSourcemaps.write('.'))
-    .pipe(gulp.dest(homedir)).on('end', () => {
+    .pipe(gulp.dest(HOMEDIR)).on('end', () => {
       if (app) {
         app.kill();
       }
@@ -100,7 +101,7 @@ gulp.task('babel:dev', wrapPipe('Babel:dev', (success, error) => {
 gulp.task('babel:prod', wrapPipe('Babel:prod', (success, error) => {
   return gulp.src('src/**/*.js')
     .pipe(gulpBabel().on('error', error))
-    .pipe(gulp.dest(homedir));
+    .pipe(gulp.dest(HOMEDIR));
 }));
 
 gulp.task('watch', () => {
