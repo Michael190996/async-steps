@@ -117,11 +117,7 @@ export default class Ctx {
    */
   stepsInDeep(steps) {
     const as = new AsyncSteps(steps, this._modules, this._events);
-    as._setSettingCurrentStep({
-      index: this.stepIndex,
-      depth: this.stepDepth + 1,
-      scheme: this.showStepScheme()
-    });
+    as._setPosCurrentStep(this.stepIndex, this.stepDepth + 1, this.showStepScheme());
 
     return as;
   }

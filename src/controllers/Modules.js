@@ -66,18 +66,18 @@ export default class Modules {
    *
    * @param {string} moduleName - имя модуля
    * @param {object} params - параметры, которые использует тот или иной модуль
-   * @param {*} [beforeResult] - результат предыдущего модуля
+   * @param {*} [pipe] - поток результата
    * @param {object} vars - глобальный переменные
    * @param ctx - экземпляр Ctx
    * @return {{result, vars}} - возвращает результат модуля
    */
-  async startModule(moduleName, params, beforeResult, vars, ctx) {
+  async startModule(moduleName, params, pipe, vars, ctx) {
     if (!this._modules[moduleName]) {
       this._events.error(new Error(`Module "${moduleName}" of undefined`), ctx);
     }
 
     try {
-      return await this._modules[moduleName](params, beforeResult, vars, ctx);
+      return await this._modules[moduleName](params, pipe, vars, ctx);
     } catch (err) {
       this._events.error(new Error(err), ctx);
     }

@@ -1,4 +1,4 @@
-export default function (params, beforeResult, vars, ctx) {
-  console.log(params, vars.$BASIC.currentModule);
+export default function (params, pipe, vars, ctx) {
+  console.log(pipe);
   return {result: true};
 }

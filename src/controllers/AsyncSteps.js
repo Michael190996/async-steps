@@ -23,31 +23,9 @@ export default class AsyncSteps {
   }
 
   /**
-   * @param {number} index
-   * @param {number} depth
-   * @param {string|number} scheme
-   */
-  _setSettingCurrentStep({index, depth, scheme}) {
-    this._currentStepIndex = index;
-    this._currentStepDepth = depth;
-    this._currentStepScheme = scheme;
-  }
-
-  /**
-   * @return {{index: (number), depth: (number), scheme: (string|number)}}
-   */
-  getPosCurrentStep() {
-    return {
-      index: this._currentStepIndex,
-      depth: this._currentStepDepth,
-      scheme: this._currentStepScheme
-    }
-  }
-
-  /**
    * @returns {{currentModule: null, beforeResult: null, currentResult: null, setting: {lodash: boolean}}}
    */
-  getNewBasic() {
+  static getNewBasic() {
     return {
       currentModule: null,
       beforeResult: null,
@@ -73,34 +51,56 @@ export default class AsyncSteps {
   }
 
   /**
+   * @param {number} index
+   * @param {number} depth
+   * @param {string|number} scheme
+   */
+  _setPosCurrentStep(index, depth, scheme) {
+    this._currentStepIndex = index;
+    this._currentStepDepth = depth;
+    this._currentStepScheme = scheme;
+  }
+
+  /**
+   * @return {{index: (number), depth: (number), scheme: (string|number)}}
+   */
+  getPosCurrentStep() {
+    return {
+      index: this._currentStepIndex,
+      depth: this._currentStepDepth,
+      scheme: this._currentStepScheme
+    }
+  }
+
+  /**
    * Метод запускает модуль
    * !!! модуль может вызывать под модули
    *
    * @param {string} moduleName - имя модуля
    * @param {object} params - параметры
-   * @param {*} [beforeResult] - предыдущий результат модуля
+   * @param {*} [pipe] - поток результата
    * @param {object} vars - глобальные переменные
    * @param ctx - экземпляр класса Ctx
    * @return {{vars, result}|*}
    */
-  async _startStep(moduleName, params, beforeResult, vars, ctx) {
+  async _startStep(moduleName, params, pipe, vars, ctx) {
     const SYNC = ctx.sync;
     const TIMEOUT = ctx.timeout;
 
     if (!TIMEOUT) {
       if (SYNC) {
-        return this.modules.startModule(moduleName, params, beforeResult, vars, ctx);
+        return this.modules.startModule(moduleName, params, pipe, vars, ctx);
       } else {
-        return await this.modules.startModule(moduleName, params, beforeResult, vars, ctx);
+        return await this.modules.startModule(moduleName, params, pipe, vars, ctx);
       }
     }
 
     if (SYNC) {
-      setTimeout(() => this.modules.startModule(moduleName, params, beforeResult, vars, ctx), TIMEOUT);
+      setTimeout(() => this.modules.startModule(moduleName, params, pipe, vars, ctx), TIMEOUT);
     } else {
       return new Promise((resolve, reject) => {
         setTimeout(async() => {
-          return resolve(await this.modules.startModule(moduleName, params, beforeResult, vars, ctx));
+          return resolve(await this.modules.startModule(moduleName, params, pipe, vars, ctx));
         }, TIMEOUT);
       });
     }
@@ -110,16 +110,14 @@ export default class AsyncSteps {
    * Асинхронный метод запуска последовательных модулей
    *
    * @param {object} [vars] - Глобальные переменные
-   * @param {*} [beforeResult] - Предыдущий результат модуля
+   * @param {*} [pipe] - поток результата
    * @return {{result: *, vars: object}}
    */
-  async init(vars = {}, beforeResult) {
-    vars.$BASIC = vars.$BASIC || this.getNewBasic();
+  async init(vars = {}, pipe) {
+    vars.$BASIC = vars.$BASIC || AsyncSteps.getNewBasic();
+    let result = pipe;
 
-    let result = beforeResult;
-
-    this.events.initSteps(beforeResult, vars);
-
+    this.events.initSteps(result, vars);
     for (let stepIndex = 0; stepIndex < this._steps.length; stepIndex++) {
       const INDEX = stepIndex + 1;
       const DEPTH = this._currentStepDepth;
@@ -134,11 +132,7 @@ export default class AsyncSteps {
         params = Object.assign({}, CURRENTSTEP.params);
       }
 
-      this._setSettingCurrentStep({
-        index: INDEX,
-        depth: DEPTH,
-        scheme: SCHEME
-      });
+      this._setPosCurrentStep(INDEX, DEPTH, SCHEME);
 
       const ctx = new Ctx({
         sync: CURRENTSTEP.sync,
@@ -153,12 +147,7 @@ export default class AsyncSteps {
       vars.$BASIC.currentModule = CURRENTSTEP;
       vars.$BASIC.beforeResult = result;
 
-      if (typeof CURRENTSTEP.before === 'function') {
-        const _result = await CURRENTSTEP.before(params, result, vars, ctx);
-        result = _result !== undefined ? _result : result;
-      }
-
-      this._logger.info(`start step ${ctx.stepIndex}:${ctx.stepDepth}, scheme "${ctx.showStepScheme()}"`);
+      this._logger.info(`start step "${ctx.showStepScheme()}"`);
       this.events.startStep(result, vars, ctx);
 
       const response = await this._startStep(MODULENAME, params, result, vars, ctx);
@@ -168,22 +157,19 @@ export default class AsyncSteps {
         vars = response.vars || vars;
       }
 
-      const _result = utils.template(CURRENTSTEP.result, vars);
-      result = _result !== undefined ? _result : result;
-
       vars.$BASIC.currentResult = result;
 
       if (typeof CURRENTSTEP.after === 'function') {
-        const _result = await CURRENTSTEP.after(params, result, vars, ctx);
-        result = _result !== undefined ? _result : result;
+        this._logger.info(`start after "${ctx.showStepScheme()}"`);
+        result = await CURRENTSTEP.after(params, result, vars, ctx) || result;
+        this._logger.info(`end after "${ctx.showStepScheme()}"`);
       }
 
       this.events.endStep(result, vars, ctx);
-      this._logger.info(`end step ${ctx.stepIndex}:${ctx.stepDepth}, scheme "${ctx.showStepScheme()}"`);
+      this._logger.info(`end step "${ctx.showStepScheme()}"`);
     }
 
     this.events.end(result, vars);
-
     return {result, vars};
   }
 }

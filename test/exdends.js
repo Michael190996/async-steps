@@ -4,10 +4,12 @@ import AE from '../src/controllers/Events';
 import path from 'path';
 
 describe('Проверка расширяемости', () => {
-  it('true', (done) => {
+  it('extends', (done) => {
     const asEvents = new AE();
-
     const asModule = new AM(asEvents);
+
+    const MODULES = AM.getModulesFromFolder(path.join(__dirname, 'modules-as'), 'main');
+    asModule.addModules(MODULES);
 
     class AsyncSteps extends AS {
       constructor(steps, _modules = asModule, _events = asEvents) {
@@ -15,27 +17,33 @@ describe('Проверка расширяемости', () => {
       }
     }
 
-    const MODULES = AM.getModulesFromFolder(path.join(__dirname, 'modules-as'), 'main');
-    asModule.addModules(MODULES);
+    // ------------------------------
 
     const as = new AsyncSteps([{
       prefix: 'main',
       module: 'test'
     }, {
       module: 'main/test',
-   //   sync: true,
       timeout: 1500,
+
       params: {
         test: '${i}'
-      }
+      },
+
+      after: (params, pipe, vars, ctx) => params.test
     }]);
 
-    const $basic = as.getNewBasic();
+    const $basic = AsyncSteps.getNewBasic();
     $basic.setting.lodash = true;
 
-    as.init({$BASIC: $basic, i: 5})
+    const globalVars = {
+      $BASIC: $basic,
+      i: 5
+    };
+
+    as.init(globalVars/*, pipe */)
       .then((response) => {
-        if (response.result === true) {
+        if (response.result === 5) {
           done();
         } else {
           done('is not "true"');

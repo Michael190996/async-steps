@@ -38,7 +38,7 @@
  - **Ansible**
 ## Фичи и особенности
 - **Расширяемость** - Модули изолированы от внешних фунций, что позволяет удобно расширять и дополнять систему.
-- **Потоки** - Модуль также может возвращать результат в едином потоке result.
+- **Потоки** - Модуль также может возвращать результат в едином потоке.
 - **Гибкость в ассинхронности/синхронности** - Все модули могут вызываться как последовательно, так и беспорядочно, простым флагом sync.
 ## Установка
 - **Npm**:
@@ -66,14 +66,14 @@ npm run build # npm run prepublish
 ```javascript
 import AsyncSteps from 'async-steps';
 
-const module = function test(params, beforeResult, vars, events) {
+const module = function test(params, pipe, vars, events) {
     return {
       result: params.test
     };
 };
 
 const modules = {
-  test2: async function(params, beforeResult, vars, events) {
+  test2: async function(params, pipe, vars, events) {
     return await {
       result: params.test
     };
@@ -101,8 +101,8 @@ as.init()
 ```javascript
 import {asModules, AsyncSteps, asEvents} from 'async-steps';
 
-asModules.addModule('test', (params, beforeResult, vars, ctx) => {
-  console.log(params, beforeResult, vars, ctx);
+asModules.addModule('test', (params, pipe, vars, ctx) => {
+  console.log(params, pipe, vars, ctx);
 });
 
 asEvents.on('initSteps', (result, vars, ctx) => {
@@ -113,7 +113,11 @@ const as = new AsyncSteps([{
   module: 'test'
 }]);
 
-as.init({vars: true}, 'result')
+const globalVars = {
+  var_i: true
+}
+
+as.init(globalVars, 'pipe')
 	.then(response => console.info(response))
 	.catch(err => console.error(err))
 ```
@@ -126,12 +130,12 @@ import AsEvents from '../dist/controllers/Events';
 const asEvents = new AsEvents();
 const asModules = new AsModules(asEvents);
 
-asModules.addModule('test', (params, beforeResult, vars, ctx) => {
-  console.log(params, beforeResult, vars, ctx);
+asModules.addModule('test', (params, pipe, vars, ctx) => {
+  console.log(params, pipe, vars, ctx);
 });
 
-const vars = {
-  vars: true
+const globalVars = {
+  vars_i: true
 };
 
 const steps = [{
@@ -139,7 +143,7 @@ const steps = [{
 }]
 
 const as = new AsyncSteps(steps, asModules, asEvents);
-as.init(vars, 'result')
+as.init(globalVars, 'pipe')
 	.then(response => console.info(response))
 	.catch(err => console.error(err))
 ````
@@ -233,10 +237,10 @@ as.init(vars, 'result')
     - {object} modules
       - {moduleName: [function](#modulefunction)} - уникальное имя: функция
       
-  * .startModule(moduleName, params[, beforeResult], vars, ctx)
+  * .startModule(moduleName, params[, pipe], vars, ctx)
     - {string} moduleName - имя вызываемого модуля
     - {params} - параметры соответствующего модуля
-    - {*} [beforeResult] - предыдущий результат
+    - {*} [pipe] - поток результата
     - [vars](#vars)
     - ctx - [экземпляр класса Ctx](#ctx) 
     
@@ -247,17 +251,17 @@ as.init(vars, 'result')
   - [[modules] - экземпляр класса Modules](#modules)
   - [[events] - экземпляр класса Events](#events)
   
+  * static getNewBasic() - возвращает новый объект $BASIC [vars](#vars)
+  
   * .modules - [ссылка на экземпляр класса modules](#modules)
   
   * .events - [ссылка на экземпляр класса Events](#events)
   
-  * .init([vars][, beforeResult])
+  * .init([vars][, pipe])
     - [[vars]](#vars)
-    - {*} [beforeResult] - предыдущий результат
+    - {*} [pipe] - поток результата
     
   * .getPosCurrentStep() - возвращает {index, depth, scheme}
-  
-  * .getNewBasic() - возвращает новый $BASIC [vars](#vars)
   
 ### Params
 ##### steps
@@ -268,9 +272,7 @@ as.init(vars, 'result')
   - {string} [prefix] - добавляет префикс к названию модуля `${prefix}/${moduleName}`
   - {boolean} [sync] - синхронность
   - {function} [[after]](#modulefunction) - функция, исполняющая после завершения текущего модуля 
-    - результат функции записывается в результат модуля result
-  - {function} [[before]](#modulefunction) - функция, исполняющая перед текущем модулем
-    - результат функции записывается в результат модуля result
+    - результат функции записывается в pipe
     
 ##### vars
 - {var: value} vars - глобальные переменные
@@ -282,8 +284,8 @@ as.init(vars, 'result')
       - {boolean} lodash - добавляет шаблонизатор на параметры params [модулей](#steps)
           
 ##### moduleFunction
-- function([params][, beforeResult], vars, ctx)
+- function([params][, pipe], vars, ctx)
   - {object} [params] - параметры соответствующего модуля
-  - {*} [beforeResult] - предыдущий результат
+  - {*} [pipe] - поток результата
   - [vars](#vars)
   - ctx - [экземпляр класса Ctx](#ctx)
