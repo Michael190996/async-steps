@@ -258,7 +258,7 @@ as.init(globalVars, 'pipe')
   - [[modules] - экземпляр класса Modules](#modules)
   - [[events] - экземпляр класса Events](#events)
   
-  * static getNewBasic() - возвращает новый объект $BASIC [vars](#vars)
+  * static getNewBasic() - возвращает новый объект [$BASIC](#vars)
   
   * .modules - [ссылка на экземпляр класса modules](#modules)
   
