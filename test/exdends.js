@@ -21,11 +21,12 @@ describe('Проверка расширяемости', () => {
 
     const as = new AsyncSteps([{
       prefix: 'main',
-      module: 'test'
+      module: 'test',
     }, {
       module: 'main/test',
       timeout: 1500,
-
+      mediumRes: 'socket',
+      
       params: {
         test: '${i}'
       },
@@ -33,6 +34,12 @@ describe('Проверка расширяемости', () => {
       after: (params, pipe, vars, ctx) => params.test
     }]);
 
+    as.events.on('mediumRes', (name, result, vars, ctx) => {
+      if (name === 'socket') {
+        console.log(result, name, vars, ctx);
+      } 
+    });
+    
     const $basic = AsyncSteps.getNewBasic();
     $basic.setting.lodash = true;
 

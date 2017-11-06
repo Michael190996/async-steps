@@ -217,6 +217,13 @@ as.init(globalVars, 'pipe')
     - {*} error - любая ошибка
     - ctx - [экземпляр класса Ctx](#ctx)
   * .on('error', function(error[, ctx]))
+  
+  * .mediumRes(name, result, vars, ctx)
+    - {string} name - имя соответствующего результата
+    - {*} [result] 
+    - [vars](#vars) 
+    - ctx - [экземпляр класса Ctx](#ctx)
+  * .on('mediumRes', function(name, result, vars, ctx))
     
 #### Modules
 Класс управляющий модулями
@@ -273,6 +280,8 @@ as.init(globalVars, 'pipe')
   - {boolean} [sync] - синхронность
   - {function} [[after]](#modulefunction) - функция, исполняющая после завершения текущего модуля 
     - результат функции записывается в pipe
+  - {string} [mediumRes] - промежуточный результат модуля возвращается в событии mediumRes с указанным именем
+    - events.mediumRes.emit(name, result, vars, ctx)
     
 ##### vars
 - {var: value} vars - глобальные переменные

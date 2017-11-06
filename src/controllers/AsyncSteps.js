@@ -89,7 +89,7 @@ export default class AsyncSteps {
 
     if (!TIMEOUT) {
       if (SYNC) {
-        return this.modules.startModule(moduleName, params, pipe, vars, ctx);
+        this.modules.startModule(moduleName, params, pipe, vars, ctx);
       } else {
         return await this.modules.startModule(moduleName, params, pipe, vars, ctx);
       }
@@ -158,6 +158,10 @@ export default class AsyncSteps {
       }
 
       vars.$BASIC.currentResult = result;
+
+      if (CURRENTSTEP.mediumRes) {
+        this.events.mediumRes(CURRENTSTEP.mediumRes, result, vars, ctx);
+      }
 
       if (typeof CURRENTSTEP.after === 'function') {
         this._logger.info(`start after "${ctx.showStepScheme()}"`);

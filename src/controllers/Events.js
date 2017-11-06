@@ -48,4 +48,16 @@ export default class extends Events {
   end(result, vars) {
     super.emit('end', result, vars);
   }
+
+  /**
+   * промежуточный результат
+   *
+   * @param {string} name - результата модуля
+   * @param {*} result - результат модуля
+   * @param {object} vars - глобальные переменные
+   * @param ctx - экземпляр Ctx
+   */
+  mediumRes(name, result, vars, ctx) {
+    super.emit('mediumRes', name, result, vars, ctx);
+  }
 }
