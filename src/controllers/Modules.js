@@ -25,8 +25,9 @@ export default class Modules {
       const newModules = {};
       
       for (let g = 0, modulesName = Object.keys(MODULES); g < modulesName.length; g++) {
-        const moduleName = `${prefix}/${modulesName[g]}`;
-        newModules[moduleName] = MODULES[modulesName[g]];
+        const NAME = `${prefix}/${modulesName[g]}`;
+
+        newModules[NAME] = MODULES[modulesName[g]];
       }
 
       return newModules;
@@ -53,7 +54,7 @@ export default class Modules {
   /**
    * Добавляет функциии модулей в объект _modules
    *
-   * @param {{name:function}} modules
+   * @param {{name: function}} modules
    */
   addModules(modules) {
     for (let i = 0, modulesName = Object.keys(modules); i < modulesName.length; i++) {

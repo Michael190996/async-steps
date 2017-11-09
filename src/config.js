@@ -1,13 +1,13 @@
-import homePackage from '../package.json';
+import PACKAGE from '../package.json';
 import path from 'path';
 
-const cwdDir = process.cwd();
-const homeDir = path.join(__dirname, '..');
+const CWDDIR = process.cwd();
+const HOMEDIR = path.join(__dirname, '..');
 
 export default {
-  homeDir,
-  cwdDir,
-  homePackage,
-  cwdPackage: require(path.join(cwdDir, 'package.json'))
+  homePackage: PACKAGE,
+  homeDir: HOMEDIR,
+  cwdDir: CWDDIR,
+  cwdPackage: require(path.join(CWDDIR, 'package.json'))
 }
 

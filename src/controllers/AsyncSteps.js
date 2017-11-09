@@ -114,27 +114,22 @@ export default class AsyncSteps {
    * @return {{result: *, vars: object}}
    */
   async init(vars = {}, pipe) {
-    vars.$BASIC = vars.$BASIC || AsyncSteps.getNewBasic();
     let result = pipe;
+    vars.$BASIC = vars.$BASIC || AsyncSteps.getNewBasic();
 
     this.events.initSteps(result, vars);
+
     for (let stepIndex = 0; stepIndex < this._steps.length; stepIndex++) {
       const INDEX = stepIndex + 1;
       const DEPTH = this._currentStepDepth;
       const SCHEME = this._currentStepScheme;
       const CURRENTSTEP = this._steps[stepIndex];
       const MODULENAME = CURRENTSTEP.prefix ? `${CURRENTSTEP.prefix}/${CURRENTSTEP.module}` : CURRENTSTEP.module;
-
-      let params = null;
-      if (vars.$BASIC.setting.lodash) {
-        params = utils.templateFromObj(CURRENTSTEP.params, vars);
-      } else {
-        params = Object.assign({}, CURRENTSTEP.params);
-      }
+      let params, ctx, response;
 
       this._setPosCurrentStep(INDEX, DEPTH, SCHEME);
 
-      const ctx = new Ctx({
+      ctx = new Ctx({
         sync: CURRENTSTEP.sync,
         timeout: CURRENTSTEP.timeout,
         prefix: CURRENTSTEP.prefix
@@ -147,10 +142,16 @@ export default class AsyncSteps {
       vars.$BASIC.currentModule = CURRENTSTEP;
       vars.$BASIC.beforeResult = result;
 
+      if (vars.$BASIC.setting.lodash) {
+        params = utils.templateFromObj(CURRENTSTEP.params, vars);
+      } else {
+        params = Object.assign({}, CURRENTSTEP.params);
+      }
+
       this._logger.info(`start step "${ctx.showStepScheme()}"`);
       this.events.startStep(result, vars, ctx);
 
-      const response = await this._startStep(MODULENAME, params, result, vars, ctx);
+      response = await this._startStep(MODULENAME, params, result, vars, ctx);
 
       if (response) {
         result = response.result !== undefined ? response.result : result;
@@ -174,6 +175,7 @@ export default class AsyncSteps {
     }
 
     this.events.end(result, vars);
+
     return {result, vars};
   }
 }

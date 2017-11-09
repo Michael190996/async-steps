@@ -7,8 +7,8 @@ describe('Проверка расширяемости', () => {
   it('extends', (done) => {
     const asEvents = new AE();
     const asModule = new AM(asEvents);
-
     const MODULES = AM.getModulesFromFolder(path.join(__dirname, 'modules-as'), 'main');
+
     asModule.addModules(MODULES);
 
     class AsyncSteps extends AS {
@@ -43,12 +43,12 @@ describe('Проверка расширяемости', () => {
     const $basic = AsyncSteps.getNewBasic();
     $basic.setting.lodash = true;
 
-    const globalVars = {
+    const GLOBALVARS = {
       $BASIC: $basic,
       i: 5
     };
 
-    as.init(globalVars/*, pipe */)
+    as.init(GLOBALVARS/*, pipe */)
       .then((response) => {
         if (response.result === 5) {
           done();

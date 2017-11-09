@@ -23,8 +23,8 @@ export default {
     const newObj = Object.assign({}, obj);
 
     for (let i = 0, keys = Object.keys(newObj); i < keys.length; i++) {
-      let template = newObj[keys[i]];
-      newObj[keys[i]] = this.template(template, vars);
+      const TEMP = newObj[keys[i]];
+      newObj[keys[i]] = this.template(TEMP, vars);
     }
 
     return newObj;
@@ -37,15 +37,15 @@ export default {
       const FILES = fs.readdirSync(dir);
 
       for (let i in FILES) {
-        const _path = path.join(dir, FILES[i]);
+        const PATH = path.join(dir, FILES[i]);
 
-        if (FILES[i].search(/\.js$/) != -1 && !fs.statSync(_path).isDirectory()) {
+        if (FILES[i].search(/\.js$/) != -1 && !fs.statSync(PATH).isDirectory()) {
           const NAME = FILES[i].replace(/\.js$/, '');
 
           try {
-            modules[NAME] = require(_path).default;
+            modules[NAME] = require(PATH).default;
           } catch (err) {
-            logger.info(_path, err.toString());
+            logger.info(PATH, err.toString());
           }
         }
       }
