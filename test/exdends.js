@@ -1,15 +1,15 @@
-import AS from '../src/controllers/AsyncSteps';
-import AM from '../src/controllers/Modules';
-import AE from '../src/controllers/Events';
+import AS from '../src/lib/AsyncSteps';
+import AM from '../src/lib/Modules';
+import AE from '../src/lib/Events';
 import path from 'path';
 
 describe('Проверка расширяемости', () => {
   it('extends', (done) => {
     const asEvents = new AE();
-    const asModule = new AM(asEvents);
-    const MODULES = AM.getModulesFromFolder(path.join(__dirname, 'modules-as'), 'main');
+    const asModule = new AM();
+    const MODULES = AM.getModulesFromFolder(path.join(__dirname, 'modules-as'));
 
-    asModule.addModules(MODULES);
+    asModule.addModules(MODULES, 'main');
 
     class AsyncSteps extends AS {
       constructor(steps, _modules = asModule, _events = asEvents) {
@@ -21,41 +21,36 @@ describe('Проверка расширяемости', () => {
 
     const as = new AsyncSteps([{
       prefix: 'main',
-      module: 'test',
+      module: 'test'
     }, {
       module: 'main/test',
       timeout: 1500,
-      mediumRes: 'socket',
-      
       params: {
-        test: '${i}'
+        get test() {
+          return true;
+        }
       },
 
-      after: (params, pipe, vars, ctx) => params.test
+      after: (params, data, vars, ctx) => params.test
     }]);
 
-    as.events.on('mediumRes', (name, result, vars, ctx) => {
-      if (name === 'socket') {
-        console.log(result, name, vars, ctx);
-      } 
+    as.events.on('startStep', (result, vars, ctx) => {
+     const SCHEME = ctx.showStepScheme().split(' -> ');
+     console.log(ctx.step, SCHEME);
     });
-    
+
     const $basic = AsyncSteps.getNewBasic();
-    $basic.setting.lodash = true;
 
     const GLOBALVARS = {
-      $BASIC: $basic,
-      i: 5
+      $BASIC: $basic
     };
 
-    as.init(GLOBALVARS/*, pipe */)
-      .then((response) => {
-        if (response.result === 5) {
-          done();
-        } else {
-          done('is not "true"');
-        }
-      })
-      .catch(err => done(err));
+    as.init(GLOBALVARS/*, data */).then((response) => {
+      if (response.result) {
+        done();
+      } else {
+        done('is not "true"');
+      }
+    }).catch(err => done(err));
   });
 });

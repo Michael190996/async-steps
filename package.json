@@ -12,14 +12,12 @@
     "url": "git+https://github.com/Michael190996/async-steps"
   },
   "scripts": {
-    "test": "./node_modules/mocha/bin/mocha --compilers js:babel-core/register",
+    "test": "./node_modules/mocha/bin/mocha --compilers js:babel-core/register --timeout=50000",
     "build": "node_modules/.bin/babel-node --presets node6 node_modules/gulp/bin/gulp.js build:dev",
     "prepublish": "node_modules/.bin/babel-node --presets node6 node_modules/gulp/bin/gulp.js build:prod"
   },
   "dependencies": {
-    "async-steps.modules-as": "*",
     "babel-plugin-transform-regenerator": "^6.26.0",
-    "lodash": "^4.17.4",
     "log4js": "^2.3.3"
   },
   "devDependencies": {
@@ -46,14 +44,18 @@
   },
   "readme": "Async-steps - Method of writing async modules (or steps)",
   "asyncsteps": {
-    "noModulesAs": false,
     "pathsToModules": [
       {
-        "prefix": false,
-        "homeDir": false,
-        "path": "async-steps.modules-as"
+        "prefix": "prefix",
+        "homeDir": true,
+        "path": "./test/modules-out"
+      }, {
+        "homeDir": true,
+        "path": "./test/modules-out"
       }
     ],
-    "importsModules": {}
+    "importsModules": {
+      "main/test": "test/modules-as/test"
+    }
   }
 }

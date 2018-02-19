@@ -1,38 +1,32 @@
 import AsyncSteps from './AsyncSteps';
 
 export default class Ctx {
-  constructor({sync, timeout, prefix}, modules, events) {
+  constructor(moduleName, step, modules, events) {
+    this._moduleName = moduleName;
+    this._step = step;
     this._stepDepth = 1;
     this._stepIndex = 1;
-    this._stepScheme = undefined;
+    this._stepScheme = null;
     this._modules = modules;
     this._events = events;
-    this._sync = sync;
-    this._prefix = prefix;
-    this._timeout = timeout;
   }
 
   /**
-   * Вернет префикс модуля
+   * Вернет имя текущего модуля
    *
-   * @return {string} prefix
+   * @returns {step}
    */
-  get prefix() {
-    return this._prefix;
+  get moduleName() {
+    return this._moduleName;
   }
 
   /**
-   * @return {boolean}
+   * Вернет текущий модуль
+   *
+   * @returns {step}
    */
-  get sync() {
-    return this._sync;
-  }
-
-  /**
-   * @return {number}
-   */
-  get timeout() {
-    return this._timeout;
+  get step() {
+    return this._step;
   }
 
   /**
@@ -54,7 +48,7 @@ export default class Ctx {
   }
 
   /**
-   * Записывает позицию глубины вложенности элемента (модуля) в массиве _steps
+   * Записывает позицию глубины вложенности элемента (модуля)
    *
    * @param {number} depth
    */
@@ -63,7 +57,7 @@ export default class Ctx {
   }
 
   /**
-   * Возвращает позицию глубины вложенности элемента (модуля) в массиве _steps
+   * Возвращает позицию глубины вложенности элемента (модуля)
    *
    * @return {number} _stepDepth
    */
@@ -72,7 +66,7 @@ export default class Ctx {
   }
 
   /**
-   * Записывает индекс текущей позиции элемента (модуля) в массиве _steps
+   * Записывает индекс текущей позиции элемента (модуля)
    *
    * @param {number} index
    */
@@ -81,7 +75,7 @@ export default class Ctx {
   }
 
   /**
-   * Возвращает индекс текущей позиции элемента (модуля) в массиве _steps
+   * Возвращает индекс текущей позиции элемента (модуля)
    *
    * @return {number} _stepIndex
    */
@@ -99,18 +93,14 @@ export default class Ctx {
   /**
    * Возвращает схему вызовов модулей
    *
-   * @return {string|number}
+   * @return {string}
    */
   showStepScheme() {
-    if (this._stepScheme) {
-      return this._stepScheme + ' -> ' + this.stepIndex;
-    } else {
-      return this.stepIndex;
-    }
+    return (this._stepScheme ? this._stepScheme + ' -> ' : '') + this.stepIndex;
   }
 
   /**
-   * Метод возвращает новый экземпляр класса AsyncSteps на одну вложенность глубже от начального элемента из массива _steps
+   * Метод возвращает новый экземпляр класса AsyncSteps на одну вложенность глубже от начального модуля
    *
    * @param {object[]} steps - массив, состоящий из последовательных элементов (модулей)
    * @return AsyncSteps - вернет новый экземпляр AsyncSteps
