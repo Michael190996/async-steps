@@ -128,7 +128,7 @@ import AsModules from '../dist/lib/Modules';
 import AsEvents from '../dist/lib/Events';
 
 const asEvents = new AsEvents();
-const asModules = new AsModules(asEvents);
+const asModules = new AsModules();
 
 asModules.addModule('test', (params, data, vars, ctx) => {
   console.log(params, data, vars, ctx);
@@ -216,7 +216,7 @@ as.init(globalVars, 'data')
     
 #### Modules
 Класс управляющий модулями
-* Modules(events[, modules])
+* Modules([, modules])
   - [events - экземпляр класса Events](#events)
   - {object} [modules] - модули
     - {moduleName: [function](#modulefunction)} - уникальное имя: функция
