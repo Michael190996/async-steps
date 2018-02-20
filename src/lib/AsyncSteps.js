@@ -101,7 +101,7 @@ export default class AsyncSteps {
    * @param ctx - экземпляр класса Ctx
    * @return {{vars, result}|*}
    */
-  startStep(moduleName, params = {}, data, vars, ctx) {
+  startStep(moduleName, params, data, vars, ctx) {
     return new Promise((resolve, reject) => {
       const TIMEOUT = ctx.step.timeout;
 
@@ -117,7 +117,7 @@ export default class AsyncSteps {
             if (typeof ctx.step.after === 'function') {
               this._logger.info(`start after "${ctx.showStepScheme()}"`);
 
-              response.result = (await ctx.step.after(ctx.step.params, response, vars, ctx)) || response.result;
+              response.result = (await ctx.step.after(params, response, vars, ctx)) || response.result;
 
               this._logger.info(`end after "${ctx.showStepScheme()}"`);
             }
@@ -152,12 +152,13 @@ export default class AsyncSteps {
       const INDEX = stepIndex + 1;
       const CURRENTSTEP = this._steps[stepIndex];
       const CTX = this._getCtx(INDEX, CURRENTSTEP);
+      const PARAMS = Object.assign({}, CTX.step.params);
       let response;
 
       vars.$BASIC.currentModule = CURRENTSTEP;
       vars.$BASIC.beforeResult = result;
 
-      const startStep = this.startStep(CTX.moduleName, result, CTX.step, vars, CTX)
+      const startStep = this.startStep(CTX.moduleName, PARAMS, result, vars, CTX)
         .then(response => vars.$BASIC.currentResult = response)
         .catch(error => this._events.error(new Error(error), CTX));
 
