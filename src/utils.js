@@ -1,34 +1,61 @@
 import fs from 'fs';
 import path from 'path';
-import log4js from 'log4js';
-
-const logger = log4js.getLogger('Utils');
-logger.level = 'info';
 
 export default {
+
+  /**
+   * @param {string} dir
+   * @return {[{fn, name}]}
+   */
   getModulesFromFolder(dir) {
-    const modules = {};
+    const modules = [];
 
     try {
       const FILES = fs.readdirSync(dir);
 
-      for (let i in FILES) {
-        const PATH = path.join(dir, FILES[i]);
+      for (let key in FILES) {
+        const PATH = path.join(dir, FILES[key]);
 
-        if (FILES[i].search(/\.js$/) != -1 && !fs.statSync(PATH).isDirectory()) {
-          const NAME = FILES[i].replace(/\.js$/, '');
-
-          try {
-            modules[NAME] = require(PATH).default;
-          } catch (err) {
-            logger.info(PATH, err.toString());
-          }
+        if (path.extname(PATH) === '.js' && !fs.statSync(PATH).isDirectory()) {
+          modules.push({
+            name: path.parse(PATH).name,
+            fn: require(PATH).default
+          });
         }
       }
     } catch (err) {
-      logger.info('Modules of undefined', dir, err.toString());
+      throw new Error(err);
     }
 
     return modules;
+  },
+
+  /**
+   * Асинхронная труба
+   * Если результат функции не определен, то результат не сохраняется
+   *
+   * @param {function[]} fns
+   * @return {function} - composition
+   */
+  compose(fns) {
+    return (res, ...args) => {
+      return new Promise((resolve, reject) => {
+        fns.reverse().reduce((prevFn, nextFn) => {
+          const next = async (value) => {
+            res = value !== undefined ? value : res;
+            return await prevFn(res, ...args);
+          };
+
+          return async (value) => {
+            try {
+              res = value !== undefined ? value : res;
+              return await nextFn(res, ...args, next);
+            } catch (err) {
+              reject(err);
+            }
+          }
+        }, value => resolve(value))(res);
+      });
+    }
   }
 }

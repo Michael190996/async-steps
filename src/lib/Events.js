@@ -2,50 +2,42 @@ import Events from 'events';
 
 export default class extends Events {
   /**
-   * @param {*} [result] - результат модуля
-   * @param {object} vars - глобальные переменные
+   * @param {*} [data] - данные
+   * @param {Array.<AS>} parentsAS
    */
-  initSteps(result, vars) {
-    super.emit('initSteps', result, vars);
+  initSteps(data, parentsAS) {
+    super.emit('initSteps', data, parentsAS);
   }
 
   /**
-   * В случае если нет слушателя, то функция вернет ошибку в catch, иначе в слушатель
-   *
-   * @param {*} error - любая ошибка
-   * @param [ctx] - экземпляр Ctx
+   * @param {*} error - ошибка
+   * @param as - экземпляр класса AS
    */
-  error(error, ctx) {
-    super.emit('error', error, ctx);
-
-    if (!super.listeners('error').length) {
-      throw new Error(error);
-    }
+  error(error, as) {
+    super.emit('error', error, as);
   }
 
   /**
-   * @param {*} [result] - результат модуля
-   * @param {object} vars - глобальные переменные
-   * @param ctx - экземпляр Ctx
+   * @param {*} [data] - данные
+   * @param as - экземпляр класса AS
    */
-  endStep(result, vars, ctx) {
-    super.emit('endStep', result, vars, ctx);
+  endStep(data, as) {
+    super.emit('endStep', data, as);
   }
 
   /**
-   * @param {*} [result] - результат модуля
-   * @param {object} vars - глобальные переменные
-   * @param ctx - экземпляр Ctx
+   * @param {*} [data] - данные
+   * @param as - экземпляр класса AS
    */
-  startStep(result, vars, ctx) {
-    super.emit('startStep', result, vars, ctx);
+  startStep(data, as) {
+    super.emit('startStep', data, as);
   }
 
   /**
-   * @param {*} [result] - результат модуля
-   * @param {object} vars - глобальные переменные
+   * @param {*} [data] - данные
+   * @param {Array.<AS>} parentsAS
    */
-  end(result, vars) {
-    super.emit('end', result, vars);
+  endSteps(data, parentsAS) {
+    super.emit('endSteps', data, parentsAS);
   }
 }

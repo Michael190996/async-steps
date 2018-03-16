@@ -1,11 +1,10 @@
 [![NPM Version](https://img.shields.io/npm/v/async-steps.svg?style=flat)](https://www.npmjs.com/package/async-steps)
 [![NPM Downloads](https://img.shields.io/npm/dm/async-steps.svg?style=flat)](https://www.npmjs.com/package/async-steps)
 [![Node.js Version](https://img.shields.io/node/v/async-steps.svg?style=flat)](http://nodejs.org/download/)
-[![Build Status](https://travis-ci.org/futoin/core-js-ri-async-steps.svg)](https://travis-ci.org/futoin/core-js-ri-async-steps)
-  [![stable](https://img.shields.io/badge/stablity-beta-green.svg?style=flat)](https://www.npmjs.com/package/futoin-asyncsteps)
-[![NPM](https://nodei.co/npm/async-steps.png?downloads=true&downloadRank=true&stars=true)](https://nodei.co/npm/async-steps/)
+  [![stable](https://img.shields.io/badge/stablity-beta-green.svg?style=flat)](https://www.npmjs.com/package/async-steps)
+[![NPM](https://nodei.co/npm/async-steps.png?downloads=true&downloadRank=true&stars=true)](https://www.npmjs.com/package/async-steps)
 
-# Async-steps (0.6.0) **BETA**
+# Async-steps (0.7.0) **BETA**
 ## Что это?
 **Async-steps** - node.js библиотека для написания последовательных модулей (блоков инструкций) в простом и понятном виде.
 * [Для чего](#Для-чего)
@@ -22,14 +21,15 @@
 * [Раздел asyncsteps в package.json](#Раздел-asyncsteps-в-packagejson)
 * [API](#api)
   - [Classes-controllers](#classes-controllers)
-    - [Ctx](#ctx)
+    - [AS](#as)
     - [Events](#events)
-    - [Modules](#modules)
+    - [Modular](#modular)
+    - [Middleware](#middleware)
+    - [Vars](#vars)
     - [AsyncSteps](#asyncsteps)
   - [Params](#params)
     - [steps](#steps)
     - [step](#step)
-    - [vars](#vars)
     - [moduleFunction](#modulefunction)
 ## Для чего?
 Для различных систем мониторинга, парсинга или сборок, где нужно последовательно выполнять ту или иную функцию.
@@ -58,30 +58,21 @@ npm run build # npm run prepublish
 ```json
 "asyncsteps": {
    "pathsToModules": [{
+      "prefix": "default",
+      "homeDir": false,
       "path": "async-steps.modules-as"
    }]
 }
 ```
-так и через экземпляр класса Modules
+так и через экземпляр класса Modular
 ```javascript
 import AsyncSteps from 'async-steps';
 
-const module = function test(params, data, vars, events) {
-    return {
-      result: params.test
-    };
+const module = function test() {
+  return true;
 };
 
-const modules = {
-  test2: async function(params, data, vars, events) {
-    return await {
-      result: params.test
-    };
-  }
-}
-
-AsyncSteps.modules.addModule(module.name, module); // один
-AsyncSteps.modules.addModules(modules); // несколько
+AsyncSteps.modular.add(module.name, module, /* prefix */);
 ```
 #### Вызов модулей
 ```javascript
@@ -92,58 +83,63 @@ const steps = [{
 }];
 
 const as = new AsyncSteps(steps);
-as.init()
+as.run()
 	.then(response => console.info(response))
 	.catch(err => console.error(err))
 ```
 ## Примеры
 #### Все в одном
 ```javascript
-import {asModules, AsyncSteps, asEvents} from 'async-steps';
+import AsyncSteps from 'async-steps';
 
-asModules.addModule('test', (params, data, vars, ctx) => {
-  console.log(params, data, vars, ctx);
-});
-
-asEvents.on('initSteps', (result, vars, ctx) => {
-  console.log(result, vars, ctx);
-});
-
-const as = new AsyncSteps([{
+const asyncSteps = new AsyncSteps([{
   module: 'test'
 }]);
 
-const globalVars = {
-  var_i: true
-}
+asyncSteps.modular.add('test', (params, data, as) => {
+  console.log(params, data, as);
+});
 
-as.init(globalVars, 'data')
+asyncSteps.events.on('initSteps', (result, vars, as) => {
+  console.log(result, vars, as);
+});
+
+asyncSteps.run('data')
 	.then(response => console.info(response))
 	.catch(err => console.error(err))
 ```
 #### Вызов классов-контроллеров
 ```javascript
-import AsyncSteps from '../dist/lib/AsyncSteps';
-import AsModules from '../dist/lib/Modules';
-import AsEvents from '../dist/lib/Events';
+import {AsyncSteps, Modular, Events, Middleware, Vars} from 'async-steps';
 
-const asEvents = new AsEvents();
-const asModules = new AsModules();
+const middleware = new Middleware();
+const events = new Events();
+const modular = new Modular();
+const vars = new Vars();
 
-asModules.addModule('test', (params, data, vars, ctx) => {
-  console.log(params, data, vars, ctx);
+modular.add('test', (params, data, as) => {
+  console.log(params, data, as);
 });
 
-const globalVars = {
+middleware.use(async(data, as, next) => {
+  const MODULENAME = as.step.module;
+  const MODULEPREFIX = as.step.prefix !== undefined ? as.step.prefix : 'default';
+  const PARAMS = Object.assign({}, as.step.params);
+
+  data = await as.modular.start(MODULENAME, MODULEPREFIX, data, as);
+  next(data);
+});
+
+vars.add('globalVars', {
   vars_i: true
-};
+});
 
 const steps = [{
   module: 'test'
-}]
+}];
 
-const as = new AsyncSteps(steps, asModules, asEvents);
-as.init(globalVars, 'data')
+const asyncSteps = new AsyncSteps(steps, modular, middleware, vars, events);
+asyncSteps.run('data')
 	.then(response => console.info(response))
 	.catch(err => console.error(err))
 ````
@@ -152,147 +148,175 @@ as.init(globalVars, 'data')
 ## Раздел asyncsteps в package.json 
 * asyncsteps
   - {object[]} [pathsToModules]
-    - {string} [prefix] - добавляет префикс к названиям модулей `${prefix}/${moduleName}`
-    - {boolean} [homeDir] - берет модуль либо с библиотеки, либо с текущей директории
     - {string} path - имя модуля или путь к директории с модулями
-  - {object} [importsModules]
-    - {name: path} - имя и путь к модулю
+    - {boolean} [homeDir] - берет модуль с библиотеки, либо с текущей директории
+    - {string} [prefix] - добавляет префикс к именам модулей
+    
 ## API
 ### Classes-controllers
-* Классы-контроллеры в директории dist/lib/*
-#### Ctx
-  * Ctx(moduleName, step[, modules][, events])
-  - moduleName - имя текущего модуля
-  - [step](#step)
-  - [[modules] - экземпляр класса Modules](#modules)
+#### AsyncSteps
+* AsyncSteps(steps[, vars][, modular][, events][, middleware])
+  - [steps](#steps)
+  - [[vars] - экземпляр класса Vars](#vars)
+  - [[modular] - экземпляр класса Modular](#modular)
   - [[events] - экземпляр класса Events](#events)
-  
-  * .moduleName - имя текущего модуля
-  
-  * .step - [step](#step)
-  
-  * .modules - [ссылка на экземпляр класса Modules](#modules)
-  
-  * .events - [ссылка на экземпляр класса Events](#events)
-  
+  - [[middleware] - экземпляр класса Middleware](#middleware)
+
+  * .[modular - ссылка на экземпляр класса Modular](#modular)
+
+  * .[events - ссылка на экземпляр класса Events](#events)
+
+  * .[middleware - ссылка на экземпляр класса Middleware](#middleware)
+
+  * .[vars - ссылка на экземпляр класса Vars](#vars)
+
+  * .setParentsAS(parentsAS)
+    - {Array.<AS>} parentsAS
+
+  * startStep(data, as)
+    - [data] - данные
+    - [as - экземпляр класса AS](#as)
+
+  * .run([data])
+    - {*} [data] - данные
+
+#### AS
+* AS(stepIndex, steps, parentsAS, modular, events, vars, middleware)
+  - stepIndex - индекс текущей позиции шага в steps
+  - [steps](#steps)
+  - {Array.<AS>} parentsAS
+  - [[modular] - экземпляр класса Modular](#modular)
+  - [[events] - экземпляр класса Events](#events)
+  - [[vars] - экземпляр класса Vars](#vars)
+  - [[middleware] - экземпляр класса Middleware](#middleware)
+
+  * .name - имя текущего модуля
+
+  * .step - [step](#step) - текущий шаг
+
+  * .steps - [steps](#steps)
+
+  * .[modular - ссылка на экземпляр класса Modular](#modular)
+
+  * .[middleware - ссылка на экземпляр класса Middleware](#middleware)
+
+  * .[events - ссылка на экземпляр класса Events](#events)
+
+  * .[vars - ссылка на экземпляр класса Vars](#vars)
+
+  * .parents - возвращает цепочку родителей - {Array.<[AS](#as)>}
+
   * .stepDepth - позиция глубины вложенности в [steps](#steps)
-  
+
   * .stepIndex - индекс текущей позиции в [steps](#steps)
-  
-  * .showStepScheme() - возвращает схему вызовов модулей [steps](#steps)
-  
-  * .stepsInDeep(steps) - метод возвращает новый экземпляр класса [asyncSteps](#asyncsteps) со заданной позицией
+
+  * .getScheme() - возвращает схему вызовов
+
+  * .setBreak($break)
+    - {boolean} $break - Данный флаг означает, что на текущем шаге нужно прекратить итерацию по массиву steps
+
+  * .setBreakAll($break)
+    - {boolean} $break - Данный флаг означает, что на текущем шаге нужно прекратить итерацию по массиву steps, в том числе и у родителей
+
+  * .getBreak() - возвращает булевое значение
+
+  * .child(steps) - метод возвращает новый экземпляр класса [asyncSteps](#asyncsteps) со заданной позицией
     - [steps](#steps)
     
 #### Events
 Класс событий, расширенный от нативного класса [Events](https://nodejs.org/api/events.html#events_events)
 * Events() 
-  * .initSteps([result, ]vars) 
-    - {*} [result] 
-    - [vars](#vars)
-  * .on('initSteps', function(result, vars))
+  * .initSteps([data, ]parentsAS)
+    - {*} [data]
+    - {Array.<AS>} parentsAS
+  * .on('initSteps', function(data, as))
   
-  * .startStep([result, ]vars, ctx)
-    - {*} [result] 
-    - [vars](#vars)
-    - ctx - [экземпляр класса Ctx](#ctx)
-  * .on('startStep', function(result, vars, ctx))
+  * .startStep([data, ]as)
+    - {*} [data]
+    - [as - экземпляр класса AS](#as)
+  * .on('startStep', function(data, as))
   
-  * .end([result, ]vars)
-    - {*} [result] 
-    - [vars](#vars)
-  * .on('end', function(result, vars))
+  * .endSteps([data, ]parentsAS)
+    - {*} [data]
+    - {Array.<AS>} parentsAS
+  * .on('end', function(data, as))
   
-  * .endStep([result, ]vars, ctx)
-    - {*} [result] 
-    - [vars](#vars) 
-    - ctx - [экземпляр класса Ctx](#ctx)
-  * .on('endStep', function(result, vars, ctx))
+  * .endStep([data, ]as)
+    - {*} [data]
+    - as - [экземпляр класса AS](#as)
+  * .on('endStep', function(data, as))
     
-  * .error(error[, ctx])
-    - {*} error - любая ошибка
-    - ctx - [экземпляр класса Ctx](#ctx)
-  * .on('error', function(error[, ctx]))
+  * .error(error, as)
+    - {Error} error - ошибка
+    - as - [экземпляр класса AS](#as)
+  * .on('error', function(error, as))
     
-#### Modules
-Класс управляющий модулями
-* Modules([, modules])
-  - [events - экземпляр класса Events](#events)
-  - {object} [modules] - модули
-    - {moduleName: [function](#modulefunction)} - уникальное имя: функция
-    
-  * static getModulesFromFolder(dir) - возвращает модули из указанной папки
-    - {string} dir - путь до папки
-    
-  * .addModule(moduleName, func[, prefix]) 
-    - {string} moduleName - уникальное имя
-    - {function} [func](#modulefunction)
-    - {string} [prefix] - добавляет префикс к названиям модулей `${prefix}/${moduleName}`
-    
-  * .addModules(modules[, prefix])
-    - {object} modules
-      - {moduleName: [function](#modulefunction)} - уникальное имя: функция
-    - {string} [prefix] - добавляет префикс к названиям модулей `${prefix}/${moduleName}`
+#### Modular
+Класс, управляющий модулями
+* Modular()
+  * .modules - Возвращает модули
 
-      
-  * .startModule(moduleName, params[, data], vars, ctx)
-    - {string} moduleName - имя вызываемого модуля
-    - {params} - параметры соответствующего модуля
-    - {*} [data] - данные
-    - [vars](#vars)
-    - ctx - [экземпляр класса Ctx](#ctx) 
-    
-#### AsyncSteps
-Класс старта
-* AsyncSteps(steps[, modules][, events]) 
-  - [steps](#steps)
-  - [[modules] - экземпляр класса Modules](#modules)
-  - [[events] - экземпляр класса Events](#events)
-  
-  * static getNewBasic() - возвращает новый объект [$BASIC](#vars)
-  
-  * .modules - [ссылка на экземпляр класса modules](#modules)
-  
-  * .events - [ссылка на экземпляр класса Events](#events)
-  
-  * .init([vars][, data])
-    - [[vars]](#vars)
-    - {*} [data] - данные
-    
-  * .getPosCurrentStep() - возвращает {index, depth, scheme}
-  
-  * .startStep(moduleName[, params][, data], vars, ctx)
-    - {string} moduleName - имя модуля
-    - {params} - параметры соответствующего модуля
-    - {*} [data] - данные
-    - [[vars]](#vars)
-    - ctx - [экземпляр класса Ctx](#ctx) 
-  
+  * .add(name, fn[, prefix])
+    - {string} name - уникальное имя модуля
+    - {function} [fn](#modulefunction)
+    - {string} [prefix] - префикс модуля
+
+  * .check(name[, prefix])
+    - {string} name - имя модуля
+    - {string} [prefix] - префикс модуля
+
+  * .start(name[, prefix][, ...argsModule])
+    - {string} name - имя модуля
+    - {string} [prefix] - префикс модуля
+    - {...} [argsModule] - аргументы соответствующего модуля
+
+#### middleware
+Класс, управляющий промежуточными результатами
+* Middleware()
+  * .middlewares - Возвращает все middlewares
+
+  * .use(fn)
+    - {function} fn
+
+  * .go(data[, ...args]) - Запускает поток
+    - {*} data
+    - {...} [args] - аргументы соответствующих middleware
+
+#### Vars
+* Vars()
+  * .add(key, value)
+    - {string} key
+    - {*} value
+
+  * .remove(key)
+    - {string} key
+
+  * .get(key)
+    - {string} key
+
+  * .check(key)
+    - {string} key
+
 ### Params
 ##### steps
 - {object[[step](#step)]} steps - последовательные модули
     
 ##### step
-- {object} step - модуль
-  - {string} module - имя вызываемого модуля
-  - {object} [params] - параметры соответствующего модуля
-  - {number} [timeout] - задержка вызова текущего модуля
-  - {string} [prefix] - добавляет префикс к названию модуля `${prefix}/${moduleName}`
-  - {boolean} [sync] - синхронность
-  - {function} [[after]](#modulefunction) - функция, исполняющая после завершения текущего модуля 
-    - результат функции записывается в data 
-    
-##### vars
-- {var: value} vars - глобальные переменные
-  - {object} [$BASIC] - вспомогательный объект модулей
-    - [currentModule](#steps) - текущий модуль
-    - {*} currentResult - текущий результат модуля
-    - {*} beforeResult - предыдущий результат модуля
-    - {object} setting - настройки
-          
+- {object} step
+  - {string} [name] - имя шага
+  - {string} module - модуль 
+  - {string} [prefix] - префикс модуля
+  - {boolean} [sync] - синхронность шага
+  - {boolean} [initData] - данные при инициализации [steps](#steps)
+  - {function} [throw] - функция, обрабатывающая исключения
+    - function throw(error, as)
+      - {Error} error
+      - [as - экземпляр класса AS](#as)
+    - результат функции при истинном значении записывается в data
+
 ##### moduleFunction
-- function([params][, data], vars, ctx)
+- function([params][, data], as)
   - {object} [params] - параметры соответствующего модуля
   - {*} [data] - данные
-  - [vars](#vars)
-  - ctx - [экземпляр класса Ctx](#ctx)
+  - [vars - экземпляр класса Vars](#vars)
+  - [as - экземпляр класса AS](#as)

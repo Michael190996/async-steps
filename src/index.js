@@ -1,47 +1,18 @@
-import path from 'path';
-import Modules from './lib/Modules';
-import Events from './lib/Events';
-import AS from './lib/AsyncSteps';
-import config from './config.js';
+export const AsyncSteps = require('./lib/AsyncSteps').default;
+export const Middleware = require('./lib/Middleware').default;
+export const Modular = require('./lib/Modular').default;
+export const Events = require('./lib/Events').default;
+export const Vars = require('./lib/Vars').default;
+export const AS = require('./lib/AS').default;
 
-export default AS;
+export const fixtures = {
+  events: require('./fixtures/events').default,
+  middleware: require('./fixtures/middleware').default,
+  modular: require('./fixtures/modular').default
+};
 
-export const AsyncSteps = AS;
-
-export const asEvents = new Events();
-
-export const asModules = new Modules();
-
-const IMPORTSMODULES = config.cwdPackage.asyncsteps.importsModules;
-let pathsToModules = config.cwdPackage.asyncsteps.pathsToModules;
-
-if (pathsToModules) {
-  pathsToModules = pathsToModules.map((el) => {
-    return Object.assign(true, el, {
-      path: el.homeDir ? path.join(config.cwdDir, el.path) : el.path
-    });
-  });
-
-  for (let i = 0; i < pathsToModules.length; i++) {
-    const MODULES = require(pathsToModules[i].path).default;
-
-    try {
-      asModules.addModules(MODULES, pathsToModules[i].prefix);
-    } catch (err) {
-      console.error(new Error(err));
-    }
+export default class extends AsyncSteps {
+  constructor(steps, modular = fixtures.modular(), middleware = fixtures.middleware(), vars = new Vars(), events = fixtures.events()) {
+    super(steps, modular, middleware, vars, events);
   }
 }
-
-if (IMPORTSMODULES) {
-  for (let i = 0, modulesName = Object.keys(IMPORTSMODULES); i < modulesName.length; i++) {
-    const MODULE = require(path.join(config.homeDir, IMPORTSMODULES[modulesName[i]])).default;
-
-    try {
-      asModules.addModule(modulesName[i], MODULE);
-    } catch (err) {
-      console.error(new Error(err));
-    }
-  }
-}
-
