@@ -23,6 +23,10 @@ export default class Vars {
    * @return {*}
    */
   get(key) {
+    if (!this.check(key)) {
+      throw new Error(`"${key}" of undefined`);
+    }
+
     return this._vars[key];
   }
 

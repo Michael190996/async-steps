@@ -1,7 +1,7 @@
 {
   "name": "async-steps",
-  "version": "0.6.0",
-  "main": "dist/index.js",
+  "version": "0.7.5",
+  "main": "dist/asyncSteps.js",
   "author": {
     "email": "misha.basov.96@yandex.ru",
     "name": "Michael Basov",
@@ -12,13 +12,14 @@
     "url": "git+https://github.com/Michael190996/async-steps"
   },
   "scripts": {
-    "test": "./node_modules/mocha/bin/mocha --compilers js:babel-core/register --timeout=50000",
+    "test": "DEBUG=async-steps:*;./node_modules/mocha/bin/mocha --compilers js:babel-core/register --timeout=50000",
+    "test:nodebug": "./node_modules/mocha/bin/mocha --compilers js:babel-core/register --timeout=50000",
     "build": "node_modules/.bin/babel-node --presets node6 node_modules/gulp/bin/gulp.js build:dev",
     "prepublish": "node_modules/.bin/babel-node --presets node6 node_modules/gulp/bin/gulp.js build:prod"
   },
   "dependencies": {
-    "babel-plugin-transform-regenerator": "^6.26.0",
-    "log4js": "^2.3.3"
+    "async-steps.engine": "^0.0.2",
+    "babel-plugin-transform-regenerator": "^6.26.0"
   },
   "devDependencies": {
     "babel-cli": "^6.26.0",
@@ -42,20 +43,5 @@
   "engines": {
     "node": ">= 1.0.0"
   },
-  "readme": "Async-steps - Method of writing async modules (or steps)",
-  "asyncsteps": {
-    "pathsToModules": [
-      {
-        "prefix": "prefix",
-        "homeDir": true,
-        "path": "./test/modules-out"
-      }, {
-        "homeDir": true,
-        "path": "./test/modules-out"
-      }
-    ],
-    "importsModules": {
-      "main/test": "test/modules-as/test"
-    }
-  }
+  "readme": "Async-steps - Method of writing async modules"
 }

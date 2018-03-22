@@ -1,43 +1,21 @@
-import Events from 'events';
+import {Events} from 'async-steps.engine';
 
 export default class extends Events {
   /**
-   * @param {*} [data] - данные
-   * @param {Array.<AS>} parentsAS
+   * @param {string} nameWare
+   * @param {*} data
+   * @param namespace - экземпляр класса Namespace
    */
-  initSteps(data, parentsAS) {
-    super.emit('initSteps', data, parentsAS);
+  startWare(nameWare, data, namespace) {
+    this.emit('startWare', nameWare, data, namespace);
   }
 
   /**
-   * @param {*} error - ошибка
-   * @param as - экземпляр класса AS
+   * @param {string} nameWare
+   * @param {*} data
+   * @param namespace - экземпляр класса Namespace
    */
-  error(error, as) {
-    super.emit('error', error, as);
-  }
-
-  /**
-   * @param {*} [data] - данные
-   * @param as - экземпляр класса AS
-   */
-  endStep(data, as) {
-    super.emit('endStep', data, as);
-  }
-
-  /**
-   * @param {*} [data] - данные
-   * @param as - экземпляр класса AS
-   */
-  startStep(data, as) {
-    super.emit('startStep', data, as);
-  }
-
-  /**
-   * @param {*} [data] - данные
-   * @param {Array.<AS>} parentsAS
-   */
-  endSteps(data, parentsAS) {
-    super.emit('endSteps', data, parentsAS);
+  endWare(nameWare, data, namespace) {
+    this.emit('endWare', nameWare, data, namespace);
   }
 }

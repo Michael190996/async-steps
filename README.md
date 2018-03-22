@@ -4,35 +4,34 @@
   [![stable](https://img.shields.io/badge/stablity-beta-green.svg?style=flat)](https://www.npmjs.com/package/async-steps)
 [![NPM](https://nodei.co/npm/async-steps.png?downloads=true&downloadRank=true&stars=true)](https://www.npmjs.com/package/async-steps)
 
-# Async-steps (0.7.0) **BETA**
+# Async-steps (0.7.5) **BETA**
 ## Что это?
-**Async-steps** - node.js библиотека для написания последовательных модулей (блоков инструкций) в простом и понятном виде.
+**Async-steps** - node.js библиотека для написания последовательных блоков инструкций.
+- Система написана на базе [async-step.engine](https://github.com/michael190996/async-steps.engine)
 * [Для чего](#Для-чего)
 * [Похожие проекты](#Похожие-проекты)
 * [Фичи и особенности](#Фичи-и-особенности)
 * [Установка](#Установка)
 * [Инструкция по использованию](#Инструкция-по-использованию)
-  - [Добавление модуля](#Добавление-модуля)
+  - [Расширяемость](#Расширяемость)
   - [Вызов модулей](#Вызов-модулей)
 * [Примеры](#Примеры)
   - [Все в одном](#Все-в-одном)
-  - [Вызов классов-контроллеров](#Вызов-классов-контроллеров)
-* [Расширяемость из библиотек](#Расширяемость-из-библиотек)
 * [Раздел asyncsteps в package.json](#Раздел-asyncsteps-в-packagejson)
+* [Middleware](#middleware)
 * [API](#api)
-  - [Classes-controllers](#classes-controllers)
-    - [AS](#as)
+  - [asyncSteps](asyncsteps)
+  - [Контроллеры](#classes-controllers)
+    - [AsyncStepsEngine](#asyncstepsengine)
+    - [Namespace](#namespace)
     - [Events](#events)
     - [Modular](#modular)
-    - [Middleware](#middleware)
     - [Vars](#vars)
-    - [AsyncSteps](#asyncsteps)
-  - [Params](#params)
+  - [Параметры](#params)
     - [steps](#steps)
     - [step](#step)
-    - [moduleFunction](#modulefunction)
 ## Для чего?
-Для различных систем мониторинга, парсинга или сборок, где нужно последовательно выполнять ту или иную функцию.
+Для различных систем мониторинга, парсинга или сборок.
 ## Похожие проекты
  - **Grunt/gulp**
  - **Puppet**
@@ -53,8 +52,8 @@ npm i && \
 npm run build # npm run prepublish
 ```
 ## Инструкция по использованию 
-#### Добавление модуля
-Добавить модули можно как в разделе asyncsteps файла package.json 
+#### Расширяемость
+Добавить модули можно в разделе asyncsteps файла package.json
 ```json
 "asyncsteps": {
    "pathsToModules": [{
@@ -64,25 +63,23 @@ npm run build # npm run prepublish
    }]
 }
 ```
-так и через экземпляр класса Modular
-```javascript
-import AsyncSteps from 'async-steps';
-
-const module = function test() {
-  return true;
-};
-
-AsyncSteps.modular.add(module.name, module, /* prefix */);
+Импортируется деволтный массив объектов
+```js
+export default [{
+   name: имя модуля,
+   fn: функция модуля
+}]
 ```
+
 #### Вызов модулей
 ```javascript
-import AsyncSteps from 'async-steps';
+import asyncSteps from 'async-steps';
 
 const steps = [{
   module: 'test'
 }];
 
-const as = new AsyncSteps(steps);
+const as = asyncSteps(steps, /* configAsyncSteps */);
 as.run()
 	.then(response => console.info(response))
 	.catch(err => console.error(err))
@@ -90,166 +87,97 @@ as.run()
 ## Примеры
 #### Все в одном
 ```javascript
-import AsyncSteps from 'async-steps';
+import asyncSteps from 'async-steps';
 
-const asyncSteps = new AsyncSteps([{
+const as = asyncSteps([{
   module: 'test'
 }]);
 
-asyncSteps.modular.add('test', (params, data, as) => {
-  console.log(params, data, as);
+as.modular.add('test', (params, data, ns) => {
+  console.log(params, data, ns);
 });
 
-asyncSteps.events.on('initSteps', (result, vars, as) => {
-  console.log(result, vars, as);
+as.events.on('initSteps', (data, parentsNS) => {
+  console.log(data, parentsNS);
 });
 
-asyncSteps.run('data')
+as.run('data')
 	.then(response => console.info(response))
 	.catch(err => console.error(err))
 ```
-#### Вызов классов-контроллеров
-```javascript
-import {AsyncSteps, Modular, Events, Middleware, Vars} from 'async-steps';
 
-const middleware = new Middleware();
-const events = new Events();
-const modular = new Modular();
-const vars = new Vars();
-
-modular.add('test', (params, data, as) => {
-  console.log(params, data, as);
-});
-
-middleware.use(async(data, as, next) => {
-  const MODULENAME = as.step.module;
-  const MODULEPREFIX = as.step.prefix !== undefined ? as.step.prefix : 'default';
-  const PARAMS = Object.assign({}, as.step.params);
-
-  data = await as.modular.start(MODULENAME, MODULEPREFIX, data, as);
-  next(data);
-});
-
-vars.add('globalVars', {
-  vars_i: true
-});
-
-const steps = [{
-  module: 'test'
-}];
-
-const asyncSteps = new AsyncSteps(steps, modular, middleware, vars, events);
-asyncSteps.run('data')
-	.then(response => console.info(response))
-	.catch(err => console.error(err))
-````
-## Расширяемость из библиотек
-- [см. https://github.com/Michael190996/async-steps.modules-as](https://github.com/Michael190996/async-steps.modules-as)
-## Раздел asyncsteps в package.json 
+## Раздел asyncsteps в package.json
 * asyncsteps
   - {object[]} [pathsToModules]
     - {string} path - имя модуля или путь к директории с модулями
     - {boolean} [homeDir] - берет модуль с библиотеки, либо с текущей директории
     - {string} [prefix] - добавляет префикс к именам модулей
-    
+
+## Middleware
+* Схема промежуточных функций ((см))[https://github.com/Michael190996/async-steps.engine#middleware].
+  - dataGet - добавляет данные с определенного шага
+  - timeout - задержка
+  - module - запускает указанный модуль
+  - after - функция, срабатывающая после завершения модуля
+  - dataSet - сохраняет результат
+
 ## API
+## asyncSteps
+Функция, возвращающая экземпляр класса [AsyncStepsEngine](#asyncstepsengine)
+- import asyncSteps from 'async-steps'
+asyncSteps(steps, configAsyncSteps)
+  - [steps](#steps)
+  - [configAsyncSteps](#Раздел-asyncsteps-в-packagejson)
 ### Classes-controllers
-#### AsyncSteps
-* AsyncSteps(steps[, vars][, modular][, events][, middleware])
+#### AsyncStepsEngine
+Расширенный [AsyncStepsEngine](https://github.com/michael190996/async-steps.engine#events)
+- import AsyncStepsEngine from 'async-steps/dist/lib/AsyncStepsEngine'
+* AsyncStepsEngine(steps[, vars][, modular][, middleware][, events])
   - [steps](#steps)
   - [[vars] - экземпляр класса Vars](#vars)
   - [[modular] - экземпляр класса Modular](#modular)
-  - [[events] - экземпляр класса Events](#events)
   - [[middleware] - экземпляр класса Middleware](#middleware)
+  - [[events] - экземпляр класса Events](#events)
 
-  * .[modular - ссылка на экземпляр класса Modular](#modular)
+  * .[events - экземпляр класса Events](#events)
 
-  * .[events - ссылка на экземпляр класса Events](#events)
+  * .[middleware - экземпляр класса Middleware](#middleware)
 
-  * .[middleware - ссылка на экземпляр класса Middleware](#middleware)
+  * .[modular - экземпляр класса Modular](#modular)
 
-  * .[vars - ссылка на экземпляр класса Vars](#vars)
+  * .[vars - экземпляр класса Vars](#vars)
 
-  * .setParentsAS(parentsAS)
-    - {Array.<AS>} parentsAS
-
-  * startStep(data, as)
-    - [data] - данные
-    - [as - экземпляр класса AS](#as)
-
-  * .run([data])
-    - {*} [data] - данные
-
-#### AS
-* AS(stepIndex, steps, parentsAS, modular, events, vars, middleware)
+#### Namespace
+Класс контекста, расширенный [Namespace](https://github.com/michael190996/async-steps.engine#namespace)
+- import Namespace from 'async-steps/dist/lib/Namespace'
+* Namespace(stepIndex, steps, parentsNamespace, modular, middleware, vars, events)
   - stepIndex - индекс текущей позиции шага в steps
   - [steps](#steps)
-  - {Array.<AS>} parentsAS
+  - {Array.<[Namespace](#namespace)>} parentsNamespace
   - [[modular] - экземпляр класса Modular](#modular)
   - [[events] - экземпляр класса Events](#events)
-  - [[vars] - экземпляр класса Vars](#vars)
   - [[middleware] - экземпляр класса Middleware](#middleware)
+  - [[vars] - экземпляр класса Vars](#vars)
 
-  * .name - имя текущего модуля
+  * .[modular - экземпляр класса Modular](#modular)
 
-  * .step - [step](#step) - текущий шаг
+  * .[vars - экземпляр класса Vars](#vars)
 
-  * .steps - [steps](#steps)
-
-  * .[modular - ссылка на экземпляр класса Modular](#modular)
-
-  * .[middleware - ссылка на экземпляр класса Middleware](#middleware)
-
-  * .[events - ссылка на экземпляр класса Events](#events)
-
-  * .[vars - ссылка на экземпляр класса Vars](#vars)
-
-  * .parents - возвращает цепочку родителей - {Array.<[AS](#as)>}
-
-  * .stepDepth - позиция глубины вложенности в [steps](#steps)
-
-  * .stepIndex - индекс текущей позиции в [steps](#steps)
-
-  * .getScheme() - возвращает схему вызовов
-
-  * .setBreak($break)
-    - {boolean} $break - Данный флаг означает, что на текущем шаге нужно прекратить итерацию по массиву steps
-
-  * .setBreakAll($break)
-    - {boolean} $break - Данный флаг означает, что на текущем шаге нужно прекратить итерацию по массиву steps, в том числе и у родителей
-
-  * .getBreak() - возвращает булевое значение
-
-  * .child(steps) - метод возвращает новый экземпляр класса [asyncSteps](#asyncsteps) со заданной позицией
-    - [steps](#steps)
-    
 #### Events
-Класс событий, расширенный от нативного класса [Events](https://nodejs.org/api/events.html#events_events)
-* Events() 
-  * .initSteps([data, ]parentsAS)
-    - {*} [data]
-    - {Array.<AS>} parentsAS
-  * .on('initSteps', function(data, as))
-  
-  * .startStep([data, ]as)
-    - {*} [data]
-    - [as - экземпляр класса AS](#as)
-  * .on('startStep', function(data, as))
-  
-  * .endSteps([data, ]parentsAS)
-    - {*} [data]
-    - {Array.<AS>} parentsAS
-  * .on('end', function(data, as))
-  
-  * .endStep([data, ]as)
-    - {*} [data]
-    - as - [экземпляр класса AS](#as)
-  * .on('endStep', function(data, as))
-    
-  * .error(error, as)
-    - {Error} error - ошибка
-    - as - [экземпляр класса AS](#as)
-  * .on('error', function(error, as))
+Класс событий, расширенный [Events](https://github.com/michael190996/async-steps.engine#events)
+- import Events from 'async-steps/dist/lib/Events'
+* Events()
+  * .startWare(nameWare, data, namespace) {
+      - {string} nameWare
+      - {*} data
+      - [namespace - экземпляр класса Namespace](#namespace)
+    * .on('startWare', function(data, namespace))
+
+  * .endWare(nameWare, data, namespace)
+      - {string} nameWare
+      - {*} data
+      - [namespace - экземпляр класса Namespace](#namespace)
+    * .on('endWare', function(data, namespace))
     
 #### Modular
 Класс, управляющий модулями
@@ -258,31 +186,27 @@ asyncSteps.run('data')
 
   * .add(name, fn[, prefix])
     - {string} name - уникальное имя модуля
-    - {function} [fn](#modulefunction)
+    - {function} fn
+      - function([params][, data], namespace)
+        - {object} [params] - параметры соответствующего модуля
+        - {*} [data] - данные
+        - [namespace - экземпляр класса Namespace](#namespace)
+
     - {string} [prefix] - префикс модуля
 
   * .check(name[, prefix])
     - {string} name - имя модуля
     - {string} [prefix] - префикс модуля
 
-  * .start(name[, prefix][, ...argsModule])
+  * .start(name[, prefix], params[, data], namespace)
     - {string} name - имя модуля
     - {string} [prefix] - префикс модуля
-    - {...} [argsModule] - аргументы соответствующего модуля
-
-#### middleware
-Класс, управляющий промежуточными результатами
-* Middleware()
-  * .middlewares - Возвращает все middlewares
-
-  * .use(fn)
-    - {function} fn
-
-  * .go(data[, ...args]) - Запускает поток
-    - {*} data
-    - {...} [args] - аргументы соответствующих middleware
+    - {object} params - параметры модуля
+    - {*} [data] - данные
+    - [namespace - экземпляр класса Namespace](#namespace)
 
 #### Vars
+Класс переменных
 * Vars()
   * .add(key, value)
     - {string} key
@@ -299,24 +223,23 @@ asyncSteps.run('data')
 
 ### Params
 ##### steps
-- {object[[step](#step)]} steps - последовательные модули
+- {object[[step](#step)]} steps
     
 ##### step
-- {object} step
-  - {string} [name] - имя шага
-  - {string} module - модуль 
-  - {string} [prefix] - префикс модуля
-  - {boolean} [sync] - синхронность шага
-  - {boolean} [initData] - данные при инициализации [steps](#steps)
-  - {function} [throw] - функция, обрабатывающая исключения
-    - function throw(error, as)
-      - {Error} error
-      - [as - экземпляр класса AS](#as)
+- {object} step ((см))[https://github.com/Michael190996/async-steps.engine#step].
+  - {string} module - вызывает модуль
+  - {string} [name=default] - имя шага
+  - {string} [prefix=default] - префикс модуля
+  - {number} [timeout] - задержка перед модулем
+  - {string} [data] - данные соответствующего шага
+  - {boolean} [sync=false] - синхронность шага
+  - {function} [after] - функция, срабатывающая после модуля
+    - function after(data, namespace)
+      - {*} data
+      - [namespace - экземпляр класса Namespace](#namespace)
     - результат функции при истинном значении записывается в data
-
-##### moduleFunction
-- function([params][, data], as)
-  - {object} [params] - параметры соответствующего модуля
-  - {*} [data] - данные
-  - [vars - экземпляр класса Vars](#vars)
-  - [as - экземпляр класса AS](#as)
+  - {function} [throwError] - функция, обрабатывающая исключения
+    - function throwError(error, namespace)
+      - {Error} error
+      - [namespace - экземпляр класса Namespace](#namespace)
+    - результат функции при истинном значении записывается в data

@@ -53,16 +53,18 @@ export default class Modular {
    *
    * @param {string} name - имя модуля
    * @param {string} [prefix=default] - префикс имени
-   * @param {...} [argsModule] - аргументы соответствующего модуля
+   * @param {object} params - параметры модуля
+   * @param {*} [data] - данные
+   * @param namespace - экземпляр класса Namespace
    * @return {Promise}
    */
-  async start(name, prefix = 'default', ...argsModule) {
+  async start(name, prefix = 'default', params, data, namespace) {
     if (!this.check(name, prefix)) {
       throw new Error(`module "${prefix}/${name}" of undefined`);
     }
 
     try {
-      return await this._modules[prefix][name](...argsModule);
+      return await this._modules[prefix][name](params, data, namespace);
     } catch (err) {
       throw err;
     }

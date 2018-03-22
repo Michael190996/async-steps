@@ -1,5 +1,5 @@
 import assert from 'assert';
-import {Modular} from '../dist';
+import Modular from '../dist/lib/Modular';
 
 describe('Проверка класса Modular', () => {
   it('add:default', (done) => {
