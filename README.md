@@ -114,7 +114,7 @@ as.run('data')
     - {string} [prefix] - добавляет префикс к именам модулей
 
 ## Middleware
-* Схема промежуточных функций ((см))[https://github.com/Michael190996/async-steps.engine#middleware].
+* Схема промежуточных функций [(см)](https://github.com/Michael190996/async-steps.engine#middleware).
   - dataGet - добавляет данные с определенного шага
   - timeout - задержка
   - module - запускает указанный модуль
@@ -125,12 +125,12 @@ as.run('data')
 ## asyncSteps
 Функция, возвращающая экземпляр класса [AsyncStepsEngine](#asyncstepsengine)
 - import asyncSteps from 'async-steps'
-asyncSteps(steps, configAsyncSteps)
+* asyncSteps(steps, configAsyncSteps)
   - [steps](#steps)
   - [configAsyncSteps](#Раздел-asyncsteps-в-packagejson)
 ### Classes-controllers
 #### AsyncStepsEngine
-Расширенный [AsyncStepsEngine](https://github.com/michael190996/async-steps.engine#events)
+Расширенный [AsyncStepsEngine](https://github.com/michael190996/async-steps.engine#asyncstepsengine)
 - import AsyncStepsEngine from 'async-steps/dist/lib/AsyncStepsEngine'
 * AsyncStepsEngine(steps[, vars][, modular][, middleware][, events])
   - [steps](#steps)
@@ -181,6 +181,7 @@ asyncSteps(steps, configAsyncSteps)
     
 #### Modular
 Класс, управляющий модулями
+- import Modular from 'async-steps/dist/lib/Modular'
 * Modular()
   * .modules - Возвращает модули
 
@@ -207,6 +208,7 @@ asyncSteps(steps, configAsyncSteps)
 
 #### Vars
 Класс переменных
+- import Vars from 'async-steps/dist/lib/Vars'
 * Vars()
   * .add(key, value)
     - {string} key
@@ -226,7 +228,7 @@ asyncSteps(steps, configAsyncSteps)
 - {object[[step](#step)]} steps
     
 ##### step
-- {object} step ((см))[https://github.com/Michael190996/async-steps.engine#step].
+- {object} step [(см)](https://github.com/Michael190996/async-steps.engine#step).
   - {string} module - вызывает модуль
   - {string} [name=default] - имя шага
   - {string} [prefix=default] - префикс модуля
