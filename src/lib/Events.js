@@ -1,5 +1,7 @@
 import {Events} from 'async-steps.engine';
 
+const debug = require('debug')('async-steps:Events');
+
 export default class extends Events {
   /**
    * @param {string} nameWare
@@ -7,6 +9,8 @@ export default class extends Events {
    * @param namespace - экземпляр класса Namespace
    */
   startWare(nameWare, data, namespace) {
+    debug('startWare', nameWare);
+
     this.emit('startWare', nameWare, data, namespace);
   }
 
@@ -16,6 +20,8 @@ export default class extends Events {
    * @param namespace - экземпляр класса Namespace
    */
   endWare(nameWare, data, namespace) {
+    debug('endWare', nameWare);
+
     this.emit('endWare', nameWare, data, namespace);
   }
 }
